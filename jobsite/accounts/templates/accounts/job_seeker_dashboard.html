@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <!-- Welcome Header -->
+    <div class="row mb-5">
+      <div class="col-12">
+        <div class="text-center">
+          <div class="mb-3">
+            <i class="fas fa-user-tie fa-4x text-primary"></i>
+          </div>
+          <h1 class="display-4 fw-bold text-primary">Welcome to JobSite!</h1>
+          <p class="lead">You're now part of our community of talented professionals</p>
+          <div class="alert alert-success" role="alert">
+            <i class="fas fa-check-circle"></i> Your job seeker account has been created successfully!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+      <div class="col-12">
+        <h2 class="text-center mb-4">Get Started</h2>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-user-edit fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Complete Your Profile</h5>
+                <p class="card-text">Add your professional headline, skills, and experience to stand out to recruiters.</p>
+                <a href="{% url 'accounts.edit_profile' %}" class="btn btn-primary">
+                  <i class="fas fa-edit"></i> Edit Profile
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-graduation-cap fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Add Education</h5>
+                <p class="card-text">Showcase your educational background and qualifications.</p>
+                <a href="{% url 'accounts.add_education' %}" class="btn btn-success">
+                  <i class="fas fa-plus"></i> Add Education
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-briefcase fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">Add Experience</h5>
+                <p class="card-text">Highlight your work experience and career achievements.</p>
+                <a href="{% url 'accounts.add_experience' %}" class="btn btn-info">
+                  <i class="fas fa-plus"></i> Add Experience
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Search Section -->
+    <div class="row mb-5">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-5">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h3 class="card-title">Ready to Find Your Next Opportunity?</h3>
+                <p class="card-text">Browse through our latest job openings and find the perfect match for your skills and career goals.</p>
+                <ul class="list-unstyled">
+                  <li><i class="fas fa-check text-success"></i> Advanced search and filtering</li>
+                  <li><i class="fas fa-check text-success"></i> Personalized job recommendations</li>
+                  <li><i class="fas fa-check text-success"></i> Direct application to employers</li>
+                </ul>
+              </div>
+              <div class="col-md-4 text-center">
+                <i class="fas fa-search fa-4x text-primary mb-3"></i>
+                <br>
+                <a href="{% url 'jobs.list' %}" class="btn btn-primary btn-lg">
+                  <i class="fas fa-search"></i> Browse Jobs
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="row mb-5">
+      <div class="col-12">
+        <h2 class="text-center mb-4">Job Search Tips</h2>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-lightbulb text-warning"></i> Profile Optimization
+                </h5>
+                <p class="card-text">Make sure your profile is complete and up-to-date. Include relevant keywords that recruiters might search for.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-bell text-info"></i> Stay Active
+                </h5>
+                <p class="card-text">Check back regularly for new opportunities and keep your profile updated with your latest skills and experience.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center">
+          <h3>What's Next?</h3>
+          <p class="lead">Complete your profile to increase your visibility to recruiters</p>
+          <div class="d-flex gap-3 justify-content-center">
+            <a href="{% url 'accounts.profile' %}" class="btn btn-outline-primary">
+              <i class="fas fa-user"></i> View My Profile
+            </a>
+            <a href="{% url 'jobs.list' %}" class="btn btn-primary">
+              <i class="fas fa-search"></i> Start Job Search
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

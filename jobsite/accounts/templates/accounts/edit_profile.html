@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow p-3 mb-4 rounded">
+          <div class="card-body">
+            <h2 class="card-title text-center mb-4">
+              {% if template_data.user_profile.is_job_seeker %}
+                <i class="fas fa-user-tie text-primary"></i> Edit Job Seeker Profile
+              {% else %}
+                <i class="fas fa-briefcase text-success"></i> Edit Recruiter Profile
+              {% endif %}
+            </h2>
+            <hr />
+
+            {% if template_data.user_profile.is_job_seeker %}
+              <!-- Job Seeker Profile Form -->
+              <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.headline.id_for_label }}" class="form-label">Professional Headline</label>
+                      {{ template_data.form.headline }}
+                      <div class="form-text">e.g., "Senior Python Developer" or "Marketing Manager"</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.location.id_for_label }}" class="form-label">Location</label>
+                      {{ template_data.form.location }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.summary.id_for_label }}" class="form-label">Professional Summary</label>
+                  {{ template_data.form.summary }}
+                  <div class="form-text">Tell recruiters about yourself, your experience, and what you're looking for</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.skills.id_for_label }}" class="form-label">Skills</label>
+                  {{ template_data.form.skills }}
+                  <div class="form-text">List your skills separated by commas (e.g., Python, Django, React, Project Management)</div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                      {{ template_data.form.phone }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <div class="form-check mt-4">
+                        {{ template_data.form.is_available }}
+                        <label class="form-check-label" for="{{ template_data.form.is_available.id_for_label }}">
+                          I'm currently looking for opportunities
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.linkedin_url.id_for_label }}" class="form-label">LinkedIn URL</label>
+                  {{ template_data.form.linkedin_url }}
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.github_url.id_for_label }}" class="form-label">GitHub URL</label>
+                  {{ template_data.form.github_url }}
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.portfolio_url.id_for_label }}" class="form-label">Portfolio/Website URL</label>
+                  {{ template_data.form.portfolio_url }}
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.resume_file.id_for_label }}" class="form-label">Resume (PDF)</label>
+                  {{ template_data.form.resume_file }}
+                  <div class="form-text">Upload your resume in PDF format</div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <a href="{% url 'accounts.profile' %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Profile
+                  </button>
+                </div>
+              </form>
+
+            {% else %}
+              <!-- Recruiter Profile Form -->
+              <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                  <label for="{{ template_data.form.company_name.id_for_label }}" class="form-label">Company Name</label>
+                  {{ template_data.form.company_name }}
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ template_data.form.company_description.id_for_label }}" class="form-label">Company Description</label>
+                  {{ template_data.form.company_description }}
+                  <div class="form-text">Tell job seekers about your company culture, mission, and what makes you unique</div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.company_website.id_for_label }}" class="form-label">Company Website</label>
+                      {{ template_data.form.company_website }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.company_size.id_for_label }}" class="form-label">Company Size</label>
+                      {{ template_data.form.company_size }}
+                      <div class="form-text">e.g., "10-50 employees"</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.industry.id_for_label }}" class="form-label">Industry</label>
+                      {{ template_data.form.industry }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.location.id_for_label }}" class="form-label">Location</label>
+                      {{ template_data.form.location }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                      {{ template_data.form.phone }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.linkedin_url.id_for_label }}" class="form-label">LinkedIn URL</label>
+                      {{ template_data.form.linkedin_url }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <a href="{% url 'accounts.profile' %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Save Profile
+                  </button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

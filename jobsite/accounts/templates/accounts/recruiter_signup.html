@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow p-3 mb-4 rounded">
+          <div class="card-body">
+            <div class="text-center mb-4">
+              <i class="fas fa-briefcase fa-2x text-success mb-2"></i>
+              <h2>Sign Up as Recruiter</h2>
+              <p class="text-muted">Create your account to start hiring talent</p>
+            </div>
+            <hr />
+            <form method="POST">
+              {% csrf_token %}
+              
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="{{ template_data.form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                  {{ template_data.form.first_name }}
+                  {% if template_data.form.first_name.errors %}
+                    <div class="text-danger">{{ template_data.form.first_name.errors }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="{{ template_data.form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                  {{ template_data.form.last_name }}
+                  {% if template_data.form.last_name.errors %}
+                    <div class="text-danger">{{ template_data.form.last_name.errors }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ template_data.form.username.id_for_label }}" class="form-label">Username *</label>
+                {{ template_data.form.username }}
+                {% if template_data.form.username.errors %}
+                  <div class="text-danger">{{ template_data.form.username.errors }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ template_data.form.email.id_for_label }}" class="form-label">Email *</label>
+                {{ template_data.form.email }}
+                {% if template_data.form.email.errors %}
+                  <div class="text-danger">{{ template_data.form.email.errors }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ template_data.form.company_name.id_for_label }}" class="form-label">Company Name *</label>
+                {{ template_data.form.company_name }}
+                {% if template_data.form.company_name.errors %}
+                  <div class="text-danger">{{ template_data.form.company_name.errors }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ template_data.form.password1.id_for_label }}" class="form-label">Password *</label>
+                {{ template_data.form.password1 }}
+                {% if template_data.form.password1.errors %}
+                  <div class="text-danger">{{ template_data.form.password1.errors }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ template_data.form.password2.id_for_label }}" class="form-label">Confirm Password *</label>
+                {{ template_data.form.password2 }}
+                {% if template_data.form.password2.errors %}
+                  <div class="text-danger">{{ template_data.form.password2.errors }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg">
+                  <i class="fas fa-briefcase"></i> Create Account
+                </button>
+              </div>
+            </form>
+            
+            <hr>
+            <div class="text-center">
+              <p class="mb-0">Already have an account? <a href="{% url 'accounts.login' %}" class="text-decoration-none">Log in here</a></p>
+              <p class="mb-0">Looking for a job? <a href="{% url 'accounts.job_seeker_signup' %}" class="text-decoration-none">Sign up as Job Seeker</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

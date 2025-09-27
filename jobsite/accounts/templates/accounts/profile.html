@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+              <div>
+                <h2>{{ template_data.user_profile.user.get_full_name|default:template_data.user_profile.user.username }}</h2>
+                <p class="text-muted">{{ template_data.user_profile.get_user_type_display }}</p>
+                {% if template_data.user_profile.is_job_seeker %}
+                <span class="badge 
+                  {% if template_data.job_seeker_profile.profile_visibility == 'public' %}bg-success
+                  {% else %}bg-secondary{% endif %}">
+                  <i class="fas fa-shield-alt"></i> {{ template_data.job_seeker_profile.get_profile_visibility_display }}
+                </span>
+                {% endif %}
+              </div>
+              <a href="{% url 'accounts.edit_profile' %}" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit Profile
+              </a>
+            </div>
+            
+            {% if template_data.user_profile.is_job_seeker and template_data.job_seeker_profile %}
+              <!-- Job Seeker Profile -->
+              <div class="mb-4">
+                {% if template_data.job_seeker_profile.headline %}
+                <h4>{{ template_data.job_seeker_profile.headline }}</h4>
+                {% endif %}
+                
+                {% if template_data.job_seeker_profile.summary %}
+                <h5>Summary</h5>
+                <p>{{ template_data.job_seeker_profile.summary|linebreaks }}</p>
+                {% endif %}
+                
+                {% if template_data.job_seeker_profile.skills_list %}
+                <h5>Skills</h5>
+                <div class="mb-3">
+                  {% for skill in template_data.job_seeker_profile.skills_list %}
+                  <span class="badge bg-primary me-2 mb-2">{{ skill }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if template_data.job_seeker_profile.show_contact_info %}
+                  {% if template_data.job_seeker_profile.location %}
+                  <p><i class="fas fa-map-marker-alt"></i> {{ template_data.job_seeker_profile.location }}</p>
+                  {% endif %}
+                  
+                  {% if template_data.job_seeker_profile.phone %}
+                  <p><i class="fas fa-phone"></i> {{ template_data.job_seeker_profile.phone }}</p>
+                  {% endif %}
+                {% else %}
+                <p class="text-muted"><i class="fas fa-lock"></i> Contact information is private</p>
+                {% endif %}
+                
+                <div class="mb-3">
+                  {% if template_data.job_seeker_profile.show_social_links %}
+                    {% if template_data.job_seeker_profile.linkedin_url %}
+                    <a href="{{ template_data.job_seeker_profile.linkedin_url }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                      <i class="fab fa-linkedin"></i> LinkedIn
+                    </a>
+                    {% endif %}
+                    {% if template_data.job_seeker_profile.github_url %}
+                    <a href="{{ template_data.job_seeker_profile.github_url }}" target="_blank" class="btn btn-outline-dark btn-sm me-2">
+                      <i class="fab fa-github"></i> GitHub
+                    </a>
+                    {% endif %}
+                    {% if template_data.job_seeker_profile.portfolio_url %}
+                    <a href="{{ template_data.job_seeker_profile.portfolio_url }}" target="_blank" class="btn btn-outline-info btn-sm">
+                      <i class="fas fa-globe"></i> Portfolio
+                    </a>
+                    {% endif %}
+                  {% else %}
+                  <p class="text-muted"><i class="fas fa-lock"></i> Social media links are private</p>
+                  {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                  <span class="badge {% if template_data.job_seeker_profile.is_available %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if template_data.job_seeker_profile.is_available %}Available for opportunities{% else %}Not currently looking{% endif %}
+                  </span>
+                </div>
+                
+                {% if template_data.job_seeker_profile.show_resume and template_data.job_seeker_profile.resume_file %}
+                <div class="mb-3">
+                  <a href="{{ template_data.job_seeker_profile.resume_file.url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-file-pdf"></i> View Resume
+                  </a>
+                </div>
+                {% elif template_data.job_seeker_profile.resume_file %}
+                <div class="mb-3">
+                  <p class="text-muted"><i class="fas fa-lock"></i> Resume is private</p>
+                </div>
+                {% endif %}
+              </div>
+              
+              <!-- Education Section -->
+              {% if template_data.job_seeker_profile.show_education %}
+                {% if template_data.job_seeker_profile.education.all %}
+                <div class="mb-4">
+                  <h5>Education</h5>
+                  {% for education in template_data.job_seeker_profile.education.all %}
+                  <div class="card mb-2">
+                    <div class="card-body">
+                      <h6 class="card-title">{{ education.degree }} - {{ education.institution }}</h6>
+                      {% if education.field_of_study %}<p class="text-muted">{{ education.field_of_study }}</p>{% endif %}
+                      <p class="card-text">
+                        {{ education.start_date|date:"M Y" }} - 
+                        {% if education.is_current %}Present{% else %}{{ education.end_date|date:"M Y" }}{% endif %}
+                      </p>
+                      {% if education.description %}<p class="card-text">{{ education.description }}</p>{% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                  <a href="{% url 'accounts.add_education' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Education
+                  </a>
+                </div>
+                {% else %}
+                <div class="mb-4">
+                  <h5>Education</h5>
+                  <p class="text-muted">No education information added yet.</p>
+                  <a href="{% url 'accounts.add_education' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Education
+                  </a>
+                </div>
+                {% endif %}
+              {% else %}
+              <div class="mb-4">
+                <h5>Education</h5>
+                <p class="text-muted"><i class="fas fa-lock"></i> Education information is private</p>
+              </div>
+              {% endif %}
+              
+              <!-- Work Experience Section -->
+              {% if template_data.job_seeker_profile.show_experience %}
+                {% if template_data.job_seeker_profile.work_experience.all %}
+                <div class="mb-4">
+                  <h5>Work Experience</h5>
+                  {% for experience in template_data.job_seeker_profile.work_experience.all %}
+                  <div class="card mb-2">
+                    <div class="card-body">
+                      <h6 class="card-title">{{ experience.position }} at {{ experience.company }}</h6>
+                      {% if experience.location %}<p class="text-muted">{{ experience.location }}</p>{% endif %}
+                      <p class="card-text">
+                        {{ experience.start_date|date:"M Y" }} - 
+                        {% if experience.is_current %}Present{% else %}{{ experience.end_date|date:"M Y" }}{% endif %}
+                      </p>
+                      {% if experience.description %}<p class="card-text">{{ experience.description }}</p>{% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                  <a href="{% url 'accounts.add_experience' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Experience
+                  </a>
+                </div>
+                {% else %}
+                <div class="mb-4">
+                  <h5>Work Experience</h5>
+                  <p class="text-muted">No work experience added yet.</p>
+                  <a href="{% url 'accounts.add_experience' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Experience
+                  </a>
+                </div>
+                {% endif %}
+              {% else %}
+              <div class="mb-4">
+                <h5>Work Experience</h5>
+                <p class="text-muted"><i class="fas fa-lock"></i> Work experience is private</p>
+              </div>
+              {% endif %}
+              
+            {% elif template_data.user_profile.is_recruiter and template_data.recruiter_profile %}
+              <!-- Recruiter Profile -->
+              <div class="mb-4">
+                <h4>{{ template_data.recruiter_profile.company_name }}</h4>
+                
+                {% if template_data.recruiter_profile.company_description %}
+                <h5>About the Company</h5>
+                <p>{{ template_data.recruiter_profile.company_description|linebreaks }}</p>
+                {% endif %}
+                
+                {% if template_data.recruiter_profile.industry %}
+                <p><i class="fas fa-industry"></i> Industry: {{ template_data.recruiter_profile.industry }}</p>
+                {% endif %}
+                
+                {% if template_data.recruiter_profile.company_size %}
+                <p><i class="fas fa-users"></i> Company Size: {{ template_data.recruiter_profile.company_size }}</p>
+                {% endif %}
+                
+                {% if template_data.recruiter_profile.location %}
+                <p><i class="fas fa-map-marker-alt"></i> {{ template_data.recruiter_profile.location }}</p>
+                {% endif %}
+                
+                {% if template_data.recruiter_profile.phone %}
+                <p><i class="fas fa-phone"></i> {{ template_data.recruiter_profile.phone }}</p>
+                {% endif %}
+                
+                <div class="mb-3">
+                  {% if template_data.recruiter_profile.company_website %}
+                  <a href="{{ template_data.recruiter_profile.company_website }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-globe"></i> Company Website
+                  </a>
+                  {% endif %}
+                  {% if template_data.recruiter_profile.linkedin_url %}
+                  <a href="{{ template_data.recruiter_profile.linkedin_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <i class="fab fa-linkedin"></i> LinkedIn
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5>Quick Actions</h5>
+            {% if template_data.user_profile.is_job_seeker %}
+              <a href="{% url 'jobs.list' %}" class="btn btn-primary w-100 mb-2">
+                <i class="fas fa-search"></i> Browse Jobs
+              </a>
+            {% elif template_data.user_profile.is_recruiter %}
+              <a href="{% url 'jobs.create' %}" class="btn btn-success w-100 mb-2">
+                <i class="fas fa-plus"></i> Post a Job
+              </a>
+              <a href="{% url 'jobs.my_jobs' %}" class="btn btn-outline-primary w-100 mb-2">
+                <i class="fas fa-list"></i> My Job Postings
+              </a>
+            {% endif %}
+            <a href="{% url 'accounts.edit_profile' %}" class="btn btn-outline-secondary w-100 mb-2">
+              <i class="fas fa-edit"></i> Edit Profile
+            </a>
+            {% if template_data.user_profile.is_job_seeker %}
+            <a href="{% url 'accounts.privacy_settings' %}" class="btn btn-outline-info w-100">
+              <i class="fas fa-shield-alt"></i> Privacy Settings
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
