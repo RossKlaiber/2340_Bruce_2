@@ -48,7 +48,7 @@ def job_list(request):
                 
                 for job in page_obj:
                     job.has_applied = job.id in applied_job_ids
-        except:
+        except AttributeError:
             pass
     
     template_data = {
