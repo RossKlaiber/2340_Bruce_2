@@ -15,9 +15,7 @@ def inbox(request):
     # Group messages by thread (root message)
     threads = {}
     for message in all_messages:
-        root_message = message
-        while root_message.parent_message:
-            root_message = root_message.parent_message
+        root_message = message.parent_message if message.parent_message else message
         
         if root_message.id not in threads:
             threads[root_message.id] = {
@@ -60,10 +58,8 @@ def inbox(request):
     })
 
 @login_required
-def compose_message(request, recipient_id=None):
-    recipient = None
-    if recipient_id:
-        recipient = get_object_or_404(User, id=recipient_id)
+def compose_message(request, recipient_id):
+    recipient = get_object_or_404(User, id=recipient_id)
 
     if request.method == 'POST':
         form = MessageForm(request.POST)
@@ -85,19 +81,14 @@ def view_message(request, message_id):
         message.save()
     
     # Find the root message of the thread
-    root_message = message
-    while root_message.parent_message:
-        root_message = root_message.parent_message
+    root_message = message.parent_message if message.parent_message else message
 
     # Get all messages in the thread, including the root and all its replies, ordered by newest first
     thread_messages_set = set()
-    
-    def get_all_descendants(msg):
-        thread_messages_set.add(msg)
-        for reply in msg.replies.all():
-            get_all_descendants(reply)
 
-    get_all_descendants(root_message)
+    thread_messages_set.add(root_message)
+    for reply in root_message.replies.all():
+        thread_messages_set.add(reply)
     
     thread_messages = sorted(list(thread_messages_set), key=lambda m: m.timestamp)
 
@@ -111,7 +102,7 @@ def view_message(request, message_id):
             reply_message_instance.sender = request.user
             reply_message_instance.recipient = initial_recipient
             reply_message_instance.subject = root_message.subject
-            reply_message_instance.parent_message = message
+            reply_message_instance.parent_message = root_message
             reply_message_instance.save()
             
             return redirect('messaging:view_message', message_id=root_message.id)
