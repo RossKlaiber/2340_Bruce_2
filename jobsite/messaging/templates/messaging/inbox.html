@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mb-5">
+    <h1 class="my-4">My Inbox</h1>
+
+    <ul class="nav nav-tabs mb-4" id="inboxTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="received-tab" data-bs-toggle="tab" href="#received" role="tab" aria-controls="received" aria-selected="true">Received</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="sent-tab" data-bs-toggle="tab" href="#sent" role="tab" aria-controls="sent" aria-selected="false">Sent</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="inboxTabsContent">
+        <div class="tab-pane fade show active" id="received" role="tabpanel" aria-labelledby="received-tab">
+            {% if received_threads_data %}
+                <div class="list-group">
+                    {% for thread_info in received_threads_data %}
+                        <a href="{% url 'messaging:view_message' thread_info.latest_message.id %}" class="list-group-item list-group-item-action {% if not thread_info.latest_message.is_read and thread_info.latest_message.recipient == request.user %}list-group-item-info{% endif %}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ thread_info.root_subject }}</h5>
+                                <small>{{ thread_info.latest_message.timestamp|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">From: {{ thread_info.latest_message.sender.username }}</p>
+                            <small>{{ thread_info.latest_message.body|truncatechars:100 }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="mb-5">No received messages.</p>
+            {% endif %}
+        </div>
+        <div class="tab-pane fade" id="sent" role="tabpanel" aria-labelledby="sent-tab">
+            {% if sent_threads_data %}
+                <div class="list-group">
+                    {% for thread_info in sent_threads_data %}
+                        <a href="{% url 'messaging:view_message' thread_info.latest_message.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ thread_info.root_subject }}</h5>
+                                <small>{{ thread_info.latest_message.timestamp|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">To: {{ thread_info.latest_message.recipient.username }}</p>
+                            <small>{{ thread_info.latest_message.body|truncatechars:100 }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="mb-5">No sent messages.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash) {
+            var triggerEl = document.querySelector('a[href="' + window.location.hash + '"]');
+            if (triggerEl) {
+                var tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+    });
+</script>
+{% endblock %}

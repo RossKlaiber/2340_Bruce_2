@@ -95,13 +95,14 @@ def recruiter_signup(request):
     
     return render(request, 'accounts/recruiter_signup.html', {'template_data': template_data})
 
-@login_required
-def profile(request):
+def profile(request, username):
     """Display user profile"""
+    user = get_object_or_404(User, username=username)
+
     try:
-        user_profile = request.user.profile
-        template_data = {'title': 'My Profile', 'user_profile': user_profile}
-        
+        user_profile = user.profile
+        template_data = {'title': f"{user.username}'s Profile", 'user_profile': user_profile}
+
         if user_profile.is_job_seeker:
             template_data['job_seeker_profile'] = user_profile.job_seeker_profile
         elif user_profile.is_recruiter:
