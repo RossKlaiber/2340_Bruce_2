@@ -50,3 +50,39 @@ class Job(models.Model):
             return f"Up to ${self.salary_max:,.0f}"
         else:
             return "Salary not specified"
+
+
+class Application(models.Model):
+    APPLICATION_STATUS = [
+        ('applied', 'Applied'),
+        ('review', 'Under Review'),
+        ('interview', 'Interview'),
+        ('offer', 'Offer Extended'),
+        ('closed', 'Closed'),
+    ]
+    
+    STATUS_COLORS = {
+        'applied': 'secondary',
+        'review': 'warning', 
+        'interview': 'info',
+        'offer': 'success',
+        'closed': 'dark',
+    }
+    
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
+    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    cover_note = models.TextField(help_text="Personal note to the employer")
+    status = models.CharField(max_length=20, choices=APPLICATION_STATUS, default='applied')
+    applied_at = models.DateTimeField(default=timezone.now)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['job', 'applicant']  # Prevent duplicate applications
+        ordering = ['-applied_at']
+    
+    def __str__(self):
+        return f"{self.applicant.username} -> {self.job.title} at {self.job.company}"
+    
+    def get_status_color(self):
+        """Get the Bootstrap color class for the current status"""
+        return self.STATUS_COLORS.get(self.status, 'secondary')

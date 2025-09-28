@@ -23,7 +23,7 @@
       <div class="col-12">
         <h2 class="text-center mb-4">Get Started</h2>
         <div class="row g-4">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
                 <div class="mb-3">
@@ -38,7 +38,7 @@
             </div>
           </div>
           
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
                 <div class="mb-3">
@@ -53,7 +53,7 @@
             </div>
           </div>
           
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
                 <div class="mb-3">
@@ -67,9 +67,83 @@
               </div>
             </div>
           </div>
+
+          <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-file-alt fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Track Applications</h5>
+                <p class="card-text">Monitor the status of your job applications and follow up on opportunities.</p>
+                <a href="{% url 'jobs.my_applications' %}" class="btn btn-warning">
+                  <i class="fas fa-chart-line"></i> View Applications
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Application Status Summary -->
+    {% if template_data.application_stats.total > 0 %}
+    <div class="row mb-5">
+      <div class="col-12">
+        <h2 class="text-center mb-4">Your Application Status</h2>
+        <div class="row g-3">
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-primary">{{ template_data.application_stats.total }}</h3>
+                <small class="text-muted">Total Applications</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-secondary">{{ template_data.application_stats.applied }}</h3>
+                <small class="text-muted">Applied</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-warning">{{ template_data.application_stats.review }}</h3>
+                <small class="text-muted">Under Review</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-info">{{ template_data.application_stats.interview }}</h3>
+                <small class="text-muted">Interview</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-success">{{ template_data.application_stats.offer }}</h3>
+                <small class="text-muted">Offer Extended</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h3 class="text-dark">{{ template_data.application_stats.closed }}</h3>
+                <small class="text-muted">Closed</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Job Search Section -->
     <div class="row mb-5">

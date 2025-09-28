@@ -1,5 +1,5 @@
 from django import forms
-from .models import Job
+from .models import Job, Application
 
 class JobForm(forms.ModelForm):
     class Meta:
@@ -68,3 +68,24 @@ class JobForm(forms.ModelForm):
         self.fields['salary_max'].help_text = 'Maximum salary (optional)'
         self.fields['benefits'].help_text = 'Benefits and perks (optional)'
         self.fields['application_deadline'].help_text = 'Application deadline (optional)'
+
+
+class ApplicationForm(forms.ModelForm):
+    class Meta:
+        model = Application
+        fields = ['cover_note']
+        widgets = {
+            'cover_note': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Tell the employer why you\'re interested in this position and why you\'d be a great fit...',
+                'required': True
+            }),
+        }
+        labels = {
+            'cover_note': 'Cover Note'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cover_note'].help_text = 'Write a personalized note to accompany your application'
