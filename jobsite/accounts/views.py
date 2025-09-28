@@ -9,6 +9,7 @@ from .forms import (
     EducationForm, WorkExperienceForm, PrivacySettingsForm
 )
 from .models import UserProfile, JobSeekerProfile, RecruiterProfile, Education, WorkExperience
+from jobs.models import Application
 
 @login_required
 def logout(request):
@@ -203,10 +204,22 @@ def job_seeker_dashboard(request):
         messages.error(request, 'Access denied.')
         return redirect('home.index')
     
+    # Get application statistics
+    applications = Application.objects.filter(applicant=request.user)
+    application_stats = {
+        'total': applications.count(),
+        'applied': applications.filter(status='applied').count(),
+        'review': applications.filter(status='review').count(),
+        'interview': applications.filter(status='interview').count(),
+        'offer': applications.filter(status='offer').count(),
+        'closed': applications.filter(status='closed').count(),
+    }
+    
     template_data = {
         'title': 'Job Seeker Dashboard',
         'user_profile': request.user.profile,
         'job_seeker_profile': request.user.profile.job_seeker_profile,
+        'application_stats': application_stats,
     }
     
     return render(request, 'accounts/job_seeker_dashboard.html', {'template_data': template_data})

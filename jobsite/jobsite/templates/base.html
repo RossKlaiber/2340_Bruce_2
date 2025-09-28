@@ -31,6 +31,8 @@
               {% if user.profile.is_recruiter %}
                 <a class="nav-link" href="{% url 'jobs.create' %}">Post Job</a>
                 <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
+              {% elif user.profile.is_job_seeker %}
+                <a class="nav-link" href="{% url 'jobs.my_applications' %}">My Applications</a>
               {% endif %}
               <a class="nav-link" href="{% url 'accounts.profile' %}">Profile</a>
               <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>

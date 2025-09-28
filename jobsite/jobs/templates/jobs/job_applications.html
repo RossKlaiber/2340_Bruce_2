@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block content %}
+{% csrf_token %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>{{ template_data.title }}</h2>
+          <a href="{% url 'jobs.detail' template_data.job.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-eye"></i> View Job
+          </a>
+        </div>
+        
+        <!-- Job Summary Card -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h5 class="card-title">{{ template_data.job.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ template_data.job.company }}</h6>
+                <p class="card-text">
+                  <i class="fas fa-map-marker-alt"></i> {{ template_data.job.location }} |
+                  <i class="fas fa-briefcase"></i> {{ template_data.job.get_job_type_display }} |
+                  <i class="fas fa-user-tie"></i> {{ template_data.job.get_experience_level_display }}
+                </p>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="mb-2">
+                  <span class="badge bg-success fs-6">{{ template_data.job.salary_range }}</span>
+                </div>
+                <small class="text-muted">
+                  Posted {{ template_data.job.created_at|timesince }} ago
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Applications -->
+        {% if template_data.applications %}
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>Applications ({{ template_data.applications.count }})</h4>
+            <small class="text-muted">Most recent first</small>
+          </div>
+          
+          {% for application in template_data.applications %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-8">
+                  <h6 class="card-title">
+                    {{ application.applicant.get_full_name|default:application.applicant.username }}
+                    <span class="badge bg-{{ application.get_status_color }} ms-2">
+                      {{ application.get_status_display }}
+                    </span>
+                  </h6>
+                  <p class="text-muted small mb-2">
+                    <i class="fas fa-envelope"></i> {{ application.applicant.email }}
+                    {% if application.applicant.profile.job_seeker_profile.phone %}
+                      | <i class="fas fa-phone"></i> {{ application.applicant.profile.job_seeker_profile.phone }}
+                    {% endif %}
+                  </p>
+                  
+                  <h6>Cover Note:</h6>
+                  <p class="card-text">{{ application.cover_note|linebreaks }}</p>
+                  
+                  {% if application.applicant.profile.job_seeker_profile %}
+                    {% with profile=application.applicant.profile.job_seeker_profile %}
+                      {% if profile.headline %}
+                        <p class="text-muted"><strong>Headline:</strong> {{ profile.headline }}</p>
+                      {% endif %}
+                      {% if profile.linkedin_url or profile.github_url or profile.portfolio_url %}
+                        <div class="mb-2">
+                          <small class="text-muted">Links:</small>
+                          {% if profile.linkedin_url %}
+                            <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                              <i class="fab fa-linkedin"></i> LinkedIn
+                            </a>
+                          {% endif %}
+                          {% if profile.github_url %}
+                            <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark me-1">
+                              <i class="fab fa-github"></i> GitHub
+                            </a>
+                          {% endif %}
+                          {% if profile.portfolio_url %}
+                            <a href="{{ profile.portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-info me-1">
+                              <i class="fas fa-globe"></i> Portfolio
+                            </a>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  {% endif %}
+                </div>
+                <div class="col-md-4 text-end">
+                  <small class="text-muted">
+                    Applied {{ application.applied_at|timesince }} ago
+                  </small>
+                  <div class="mt-3">
+                    <div class="btn-group-vertical d-grid gap-1" role="group">
+                      <button class="btn btn-sm btn-outline-secondary status-btn" 
+                              onclick="updateApplicationStatus('{{ application.id }}', 'applied')"
+                              {% if application.status == 'applied' %}disabled{% endif %}>
+                        <i class="fas fa-paper-plane"></i> Applied
+                      </button>
+                      <button class="btn btn-sm btn-outline-warning status-btn" 
+                              onclick="updateApplicationStatus('{{ application.id }}', 'review')"
+                              {% if application.status == 'review' %}disabled{% endif %}>
+                        <i class="fas fa-eye"></i> Under Review
+                      </button>
+                      <button class="btn btn-sm btn-outline-info status-btn" 
+                              onclick="updateApplicationStatus('{{ application.id }}', 'interview')"
+                              {% if application.status == 'interview' %}disabled{% endif %}>
+                        <i class="fas fa-users"></i> Interview
+                      </button>
+                      <button class="btn btn-sm btn-outline-success status-btn" 
+                              onclick="updateApplicationStatus('{{ application.id }}', 'offer')"
+                              {% if application.status == 'offer' %}disabled{% endif %}>
+                        <i class="fas fa-handshake"></i> Offer Extended
+                      </button>
+                      <button class="btn btn-sm btn-outline-dark status-btn" 
+                              onclick="updateApplicationStatus('{{ application.id }}', 'closed')"
+                              {% if application.status == 'closed' %}disabled{% endif %}>
+                        <i class="fas fa-times"></i> Closed
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h4>No applications yet</h4>
+          <p class="text-muted">When job seekers apply to this position, their applications will appear here.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateApplicationStatus(applicationId, status) {
+    const formData = new FormData();
+    formData.append('status', status);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/jobs/applications/${applicationId}/update-status/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Success!</strong> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+            
+            // Update the badge
+            const badge = document.querySelector(`[onclick*="${applicationId}"]`).closest('.card').querySelector('.badge');
+            if (badge) {
+                badge.className = `badge bg-${data.status_color} ms-2`;
+                badge.textContent = data.new_status;
+            }
+            
+            // Update button states
+            const buttons = document.querySelectorAll(`[onclick*="${applicationId}"]`);
+            buttons.forEach(button => {
+                button.disabled = false;
+                button.classList.remove('btn-secondary', 'btn-warning', 'btn-info', 'btn-success', 'btn-dark');
+                button.classList.add('btn-outline-secondary', 'btn-outline-warning', 'btn-outline-info', 'btn-outline-success', 'btn-outline-dark');
+            });
+            
+            // Disable the current status button
+            const currentButton = document.querySelector(`[onclick*="${applicationId}"][onclick*="${status}"]`);
+            if (currentButton) {
+                currentButton.disabled = true;
+            }
+        } else {
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Error!</strong> ${data.error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <strong>Error!</strong> Something went wrong. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    });
+}
+</script>
+{% endblock content %}

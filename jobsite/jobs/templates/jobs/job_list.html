@@ -77,9 +77,23 @@
                     Posted {{ job.created_at|timesince }} ago
                   </small>
                   <div class="mt-2">
-                    <a href="{% url 'jobs.detail' job.id %}" class="btn btn-outline-primary btn-sm">
+                    <a href="{% url 'jobs.detail' job.id %}" class="btn btn-outline-primary btn-sm me-2">
                       View Details
                     </a>
+                    {% if user.is_authenticated and user.profile.is_job_seeker %}
+                      {% if job.has_applied %}
+                        <button class="btn btn-success btn-sm" disabled>
+                          <i class="fas fa-check"></i> Applied
+                        </button>
+                      {% else %}
+                        <button class="btn btn-primary btn-sm apply-now-btn" 
+                                data-job-id="{{ job.id }}" 
+                                data-job-title="{{ job.title }}" 
+                                data-company="{{ job.company }}">
+                          <i class="fas fa-paper-plane"></i> Apply Now
+                        </button>
+                      {% endif %}
+                    {% endif %}
                   </div>
                 </div>
               </div>
@@ -128,4 +142,141 @@
     </div>
   </div>
 </div>
+
+<!-- Application Modal -->
+<div class="modal fade" id="applicationModal" tabindex="-1" aria-labelledby="applicationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="applicationModalLabel">Apply for Position</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="applicationForm">
+        <div class="modal-body">
+          {% csrf_token %}
+          <div class="mb-3">
+            <strong id="jobTitleDisplay"></strong>
+            <br>
+            <small class="text-muted" id="companyDisplay"></small>
+          </div>
+          <div class="mb-3">
+            <label for="coverNote" class="form-label">Cover Note *</label>
+            <textarea class="form-control" id="coverNote" name="cover_note" rows="4" 
+                      placeholder="Tell the employer why you're interested in this position and why you'd be a great fit..." 
+                      required></textarea>
+            <div class="form-text">Write a personalized note to accompany your application</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const applyButtons = document.querySelectorAll('.apply-now-btn');
+    const applicationModal = new bootstrap.Modal(document.getElementById('applicationModal'));
+    const applicationForm = document.getElementById('applicationForm');
+    const jobTitleDisplay = document.getElementById('jobTitleDisplay');
+    const companyDisplay = document.getElementById('companyDisplay');
+    const coverNoteTextarea = document.getElementById('coverNote');
+    
+    let currentJobId = null;
+    
+    // Handle Apply Now button clicks
+    applyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            currentJobId = this.dataset.jobId;
+            const jobTitle = this.dataset.jobTitle;
+            const company = this.dataset.company;
+            
+            jobTitleDisplay.textContent = jobTitle;
+            companyDisplay.textContent = company;
+            coverNoteTextarea.value = '';
+            
+            applicationModal.show();
+        });
+    });
+    
+    // Handle form submission
+    applicationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentJobId) return;
+        
+        const formData = new FormData();
+        formData.append('cover_note', coverNoteTextarea.value);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Disable submit button
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
+        
+        fetch(`/jobs/${currentJobId}/apply/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                applicationModal.hide();
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <strong>Success!</strong> ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+                
+                // Update the button to show applied status
+                const appliedButton = document.querySelector(`[data-job-id="${currentJobId}"]`);
+                if (appliedButton) {
+                    appliedButton.innerHTML = '<i class="fas fa-check"></i> Applied';
+                    appliedButton.classList.remove('btn-primary');
+                    appliedButton.classList.add('btn-success');
+                    appliedButton.disabled = true;
+                }
+            } else {
+                // Show error message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <strong>Error!</strong> ${data.error}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                applicationModal.hide();
+                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Error!</strong> Something went wrong. Please try again.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            applicationModal.hide();
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+        })
+        .finally(() => {
+            // Re-enable submit button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+});
+</script>
 {% endblock content %}
