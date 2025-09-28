@@ -144,7 +144,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const applyButton = document.querySelector('.apply-now-btn');
     if (!applyButton) return; // No apply button on this page
     
-    const applicationModal = new bootstrap.Modal(document.getElementById('applicationModal'));
+    const applicationModalElement = document.getElementById('applicationModal');
+    if (!applicationModalElement) return; // No modal element present
+    const applicationModal = new bootstrap.Modal(applicationModalElement);
     const applicationForm = document.getElementById('applicationForm');
     const jobTitleDisplay = document.getElementById('jobTitleDisplay');
     const companyDisplay = document.getElementById('companyDisplay');
