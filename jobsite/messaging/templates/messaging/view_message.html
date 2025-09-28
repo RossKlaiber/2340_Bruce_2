@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">View Message</h1>
+    <a href="{% url 'messaging:inbox' %}" class="btn btn-secondary mb-3"><i class="fa-solid fa-chevron-left"></i>
+        &nbsp;Back
+        to Inbox</a>
+    <h4 class="my-4">Subject: {{ root_subject }}</h4>
+    <div class="list-group mb-4">
+
+        {% for msg in thread_messages %}
+        <div class="list-group-item">
+            <div>
+                <strong>From:</strong> {{ msg.sender.username }}<br>
+                <strong>To:</strong> {{ msg.recipient.username }}<br>
+                <small>{{ msg.timestamp|date:"M d, Y H:i" }}</small>
+            </div>
+            <hr>
+            <p>{{ msg.body|linebreaksbr }}</p>
+            {% if forloop.last %}
+            <div class="my-2">
+                <button type="button" class="btn btn-primary" id="replyButton">
+                    <i class="fa-solid fa-reply"></i> Reply
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="replyFormSection" style="display: none;">
+        <h3 class="my-4">Reply to Message</h3>
+        <form class="my-4" method="post">
+            {% csrf_token %}
+            <p><strong>To:</strong> {{ initial_recipient.username }}</p>
+            <div class="form-group">
+                <label for="{{ reply_form.body.id_for_label }}">Body:</label>
+                {{ reply_form.body }}
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Send Reply</button>
+            <button type="button" class="btn btn-secondary mt-4" id="cancelReplyButton">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const replyButton = document.getElementById('replyButton');
+        const replyFormSection = document.getElementById('replyFormSection');
+        const cancelReplyButton = document.getElementById('cancelReplyButton');
+
+        replyButton.addEventListener('click', function () {
+            replyFormSection.style.display = 'block';
+            replyButton.style.display = 'none';
+            document.getElementById("id_body").value = "";
+        });
+
+        cancelReplyButton.addEventListener('click', function () {
+            replyFormSection.style.display = 'none';
+            replyButton.style.display = 'block';
+        });
+    });
+</script>
+{% endblock %}

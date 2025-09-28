@@ -136,7 +136,7 @@
           <h3>What's Next?</h3>
           <p class="lead">Complete your profile to increase your visibility to recruiters</p>
           <div class="d-flex gap-3 justify-content-center">
-            <a href="{% url 'accounts.profile' %}" class="btn btn-outline-primary">
+            <a href="{% url 'accounts.profile' user.username %}" class="btn btn-outline-primary">
               <i class="fas fa-user"></i> View My Profile
             </a>
             <a href="{% url 'jobs.list' %}" class="btn btn-primary">

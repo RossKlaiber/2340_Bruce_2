@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"crossorigin="anonymous"></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
 
@@ -32,7 +31,8 @@
                 <a class="nav-link" href="{% url 'jobs.create' %}">Post Job</a>
                 <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
               {% endif %}
-              <a class="nav-link" href="{% url 'accounts.profile' %}">Profile</a>
+              <a class="nav-link" href="{% url 'messaging:inbox' %}">Messages</a>
+              <a class="nav-link" href="{% url 'accounts.profile' user.username %}">Profile</a>
               <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>
             {% else %}
               <a class="nav-link" href="{% url 'accounts.login' %}">Login</a>
