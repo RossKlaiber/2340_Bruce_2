@@ -201,6 +201,70 @@ def add_experience(request):
     return render(request, 'accounts/add_experience.html', {'template_data': template_data})
 
 @login_required
+def edit_education(request, education_id):
+    """Edit an education entry for job seekers"""
+    education = get_object_or_404(Education, id=education_id, job_seeker=request.user.profile.job_seeker_profile)
+    
+    template_data = {'title': 'Edit Education'}
+    
+    if request.method == 'POST':
+        form = EducationForm(request.POST, instance=education)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Education updated successfully!')
+            return redirect('accounts.profile', username=request.user.username)
+    else:
+        form = EducationForm(instance=education)
+    
+    template_data['form'] = form
+    return render(request, 'accounts/add_education.html', {'template_data': template_data})
+
+@login_required
+def delete_education(request, education_id):
+    """Delete an education entry for job seekers"""
+    education = get_object_or_404(Education, id=education_id, job_seeker=request.user.profile.job_seeker_profile)
+    
+    if request.method == 'POST':
+        education.delete()
+        messages.success(request, 'Education deleted successfully!')
+        return redirect('accounts.profile', username=request.user.username)
+        
+    template_data = {'title': 'Confirm Delete Education', 'education': education}
+    return render(request, 'accounts/confirm_delete_education.html', {'template_data': template_data})
+
+@login_required
+def edit_experience(request, experience_id):
+    """Edit a work experience entry for job seekers"""
+    experience = get_object_or_404(WorkExperience, id=experience_id, job_seeker=request.user.profile.job_seeker_profile)
+    
+    template_data = {'title': 'Edit Work Experience'}
+    
+    if request.method == 'POST':
+        form = WorkExperienceForm(request.POST, instance=experience)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Work experience updated successfully!')
+            return redirect('accounts.profile', username=request.user.username)
+    else:
+        form = WorkExperienceForm(instance=experience)
+    
+    template_data['form'] = form
+    return render(request, 'accounts/add_experience.html', {'template_data': template_data})
+
+@login_required
+def delete_experience(request, experience_id):
+    """Delete a work experience entry for job seekers"""
+    experience = get_object_or_404(WorkExperience, id=experience_id, job_seeker=request.user.profile.job_seeker_profile)
+    
+    if request.method == 'POST':
+        experience.delete()
+        messages.success(request, 'Work experience deleted successfully!')
+        return redirect('accounts.profile', username=request.user.username)
+        
+    template_data = {'title': 'Confirm Delete Work Experience', 'experience': experience}
+    return render(request, 'accounts/confirm_delete_experience.html', {'template_data': template_data})
+
+@login_required
 def job_seeker_dashboard(request):
     """Job seeker dashboard/landing page"""
     if not request.user.profile.is_job_seeker:
