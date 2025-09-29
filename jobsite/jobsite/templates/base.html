@@ -25,15 +25,15 @@
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav ms-auto navbar-ml">
             <a class="nav-link" href="{% url 'jobs.list' %}">Jobs</a>
-            <div class="vr bg-white mx-2 d-none d-lg-block"></div>
             {% if user.is_authenticated %}
               {% if user.profile.is_recruiter %}
-                <a class="nav-link" href="{% url 'jobs.create' %}">Post Job</a>
                 <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
+                <a class="nav-link" href="{% url 'accounts.candidate_search' %}">Find Talent</a>
               {% elif user.profile.is_job_seeker %}
                 <a class="nav-link" href="{% url 'jobs.my_applications' %}">My Applications</a>
               {% endif %}
               <a class="nav-link" href="{% url 'messaging:inbox' %}">Messages</a>
+              <div class="vr bg-white mx-2 d-none d-lg-block"></div>
               <a class="nav-link" href="{% url 'accounts.profile' user.username %}">Profile</a>
               <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>
             {% else %}
