@@ -99,81 +99,74 @@
                 {% endif %}
               </div>
               
-              <!-- Education Section -->
-              {% if template_data.job_seeker_profile.show_education %}
-                {% if template_data.job_seeker_profile.education.all %}
-                <div class="mb-4">
-                  <h5>Education</h5>
-                  {% for education in template_data.job_seeker_profile.education.all %}
-                  <div class="card mb-2">
-                    <div class="card-body">
-                      <h6 class="card-title">{{ education.degree }} - {{ education.institution }}</h6>
-                      {% if education.field_of_study %}<p class="text-muted">{{ education.field_of_study }}</p>{% endif %}
-                      <p class="card-text">
-                        {{ education.start_date|date:"M Y" }} - 
-                        {% if education.is_current %}Present{% else %}{{ education.end_date|date:"M Y" }}{% endif %}
-                      </p>
-                      {% if education.description %}<p class="card-text">{{ education.description }}</p>{% endif %}
-                    </div>
-                  </div>
-                  {% endfor %}
-                  <a href="{% url 'accounts.add_education' %}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Education
-                  </a>
+            <!-- Education Section -->
+            <div class="mb-4">
+              <h5>Education</h5>
+              {% if not template_data.job_seeker_profile.show_education %}
+              <p class="text-muted"><i class="fas fa-lock"></i> Education information is private</p>
+              {% endif %}
+              {% if template_data.job_seeker_profile.show_education or request.user == template_data.user_profile.user %}
+              {% if template_data.job_seeker_profile.education.all %}
+              {% for education in template_data.job_seeker_profile.education.all %}
+              <div class="card mb-2">
+                <div class="card-body">
+                  <h6 class="card-title">{{ education.degree }} - {{ education.institution }}</h6>
+                  {% if education.field_of_study %}<p class="text-muted">{{ education.field_of_study }}</p>{% endif %}
+                  <p class="card-text">
+                    {{ education.start_date|date:"M Y" }} -
+                    {% if education.is_current %}Present{% else %}{{ education.end_date|date:"M Y" }}{% endif %}
+                  </p>
+                  {% if education.description %}<p class="card-text">{{ education.description }}</p>{% endif %}
                 </div>
-                {% else %}
-                <div class="mb-4">
-                  <h5>Education</h5>
-                  <p class="text-muted">No education information added yet.</p>
-                  <a href="{% url 'accounts.add_education' %}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Education
-                  </a>
-                </div>
-                {% endif %}
-              {% else %}
-              <div class="mb-4">
-                <h5>Education</h5>
-                <p class="text-muted"><i class="fas fa-lock"></i> Education information is private</p>
               </div>
+              {% endfor %}
+              {% else %}
+              <p class="text-muted">No education information added yet.</p>
+
+              {% endif %}
+              {% if request.user == template_data.user_profile.user %}
+              <a href="{% url 'accounts.add_education' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Education
+              </a>
+              {% endif %}
+              {% endif %}
+            </div>
+
+            <!-- Work Experience Section -->
+            <div class="mb-4">
+              <h5>Work Experience</h5>
+              {% if not template_data.job_seeker_profile.show_experience %}
+              <p class="text-muted"><i class="fas fa-lock"></i> Work experience is private</p>
+              {% endif %}
+              {% if template_data.job_seeker_profile.show_experience or request.user == template_data.user_profile.user %}
+              {% if template_data.job_seeker_profile.work_experience.all %}
+
+              {% for experience in template_data.job_seeker_profile.work_experience.all %}
+              <div class="card mb-2">
+                <div class="card-body">
+                  <h6 class="card-title">{{ experience.position }} at {{ experience.company }}</h6>
+                  {% if experience.location %}<p class="text-muted">{{ experience.location }}</p>{% endif %}
+                  <p class="card-text">
+                    {{ experience.start_date|date:"M Y" }} -
+                    {% if experience.is_current %}Present{% else %}{{ experience.end_date|date:"M Y" }}{% endif %}
+                  </p>
+                  {% if experience.description %}<p class="card-text">{{ experience.description }}</p>{% endif %}
+                </div>
+              </div>
+              {% endfor %}
+
+              {% else %}
+              <p class="text-muted">No work experience added yet.</p>
+              {% endif %}
+
+              {% if request.user == template_data.user_profile.user %}
+              <a href="{% url 'accounts.add_experience' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Experience
+              </a>
               {% endif %}
               
-              <!-- Work Experience Section -->
-              {% if template_data.job_seeker_profile.show_experience %}
-                {% if template_data.job_seeker_profile.work_experience.all %}
-                <div class="mb-4">
-                  <h5>Work Experience</h5>
-                  {% for experience in template_data.job_seeker_profile.work_experience.all %}
-                  <div class="card mb-2">
-                    <div class="card-body">
-                      <h6 class="card-title">{{ experience.position }} at {{ experience.company }}</h6>
-                      {% if experience.location %}<p class="text-muted">{{ experience.location }}</p>{% endif %}
-                      <p class="card-text">
-                        {{ experience.start_date|date:"M Y" }} - 
-                        {% if experience.is_current %}Present{% else %}{{ experience.end_date|date:"M Y" }}{% endif %}
-                      </p>
-                      {% if experience.description %}<p class="card-text">{{ experience.description }}</p>{% endif %}
-                    </div>
-                  </div>
-                  {% endfor %}
-                  <a href="{% url 'accounts.add_experience' %}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Experience
-                  </a>
-                </div>
-                {% else %}
-                <div class="mb-4">
-                  <h5>Work Experience</h5>
-                  <p class="text-muted">No work experience added yet.</p>
-                  <a href="{% url 'accounts.add_experience' %}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Experience
-                  </a>
-                </div>
-                {% endif %}
-              {% else %}
-              <div class="mb-4">
-                <h5>Work Experience</h5>
-                <p class="text-muted"><i class="fas fa-lock"></i> Work experience is private</p>
-              </div>
               {% endif %}
+            </div>
               
             {% elif template_data.user_profile.is_recruiter and template_data.recruiter_profile %}
               <!-- Recruiter Profile -->

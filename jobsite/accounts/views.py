@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -130,7 +131,7 @@ def edit_profile(request):
                 if form.is_valid():
                     form.save()
                     messages.success(request, 'Profile updated successfully!')
-                    return redirect('accounts.profile')
+                    return redirect('accounts.profile', username=request.user.username)
             else:
                 form = JobSeekerProfileForm(instance=job_seeker_profile)
             template_data['form'] = form
@@ -142,7 +143,7 @@ def edit_profile(request):
                 if form.is_valid():
                     form.save()
                     messages.success(request, 'Profile updated successfully!')
-                    return redirect('accounts.profile')
+                    return redirect('accounts.profile', username=request.user.username)
             else:
                 form = RecruiterProfileForm(instance=recruiter_profile)
             template_data['form'] = form
@@ -158,7 +159,7 @@ def add_education(request):
     """Add education entry for job seekers"""
     if not request.user.profile.is_job_seeker:
         messages.error(request, 'Access denied.')
-        return redirect('accounts.profile')
+        return redirect('accounts.profile', username=request.user.username)
     
     template_data = {'title': 'Add Education'}
     
@@ -169,7 +170,7 @@ def add_education(request):
             education.job_seeker = request.user.profile.job_seeker_profile
             education.save()
             messages.success(request, 'Education added successfully!')
-            return redirect('accounts.profile')
+            return redirect('accounts.profile', username=request.user.username)
     else:
         form = EducationForm()
     
@@ -181,7 +182,7 @@ def add_experience(request):
     """Add work experience entry for job seekers"""
     if not request.user.profile.is_job_seeker:
         messages.error(request, 'Access denied.')
-        return redirect('accounts.profile')
+        return redirect('accounts.profile', username=request.user.username)
     
     template_data = {'title': 'Add Work Experience'}
     
@@ -192,7 +193,7 @@ def add_experience(request):
             experience.job_seeker = request.user.profile.job_seeker_profile
             experience.save()
             messages.success(request, 'Work experience added successfully!')
-            return redirect('accounts.profile')
+            return redirect('accounts.profile', username=request.user.username)
     else:
         form = WorkExperienceForm()
     
@@ -288,7 +289,8 @@ def privacy_settings(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Privacy settings updated successfully!')
-            return redirect('accounts.profile')
+            profile_url = reverse('accounts.profile', kwargs={'username': request.user.username})
+            return redirect(profile_url)
     else:
         form = PrivacySettingsForm(instance=request.user.profile.job_seeker_profile)
     
