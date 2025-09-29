@@ -14,6 +14,7 @@
                 <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {{ template_data.job.location }}</p>
                 <p><i class="fas fa-briefcase"></i> <strong>Job Type:</strong> {{ template_data.job.get_job_type_display }}</p>
                 <p><i class="fas fa-user-tie"></i> <strong>Experience Level:</strong> {{ template_data.job.get_experience_level_display }}</p>
+                <p><i class="fas fa-home"></i> <strong>Work Type:</strong> {{ template_data.job.get_work_type_display }}</p>
               </div>
               <div class="col-md-6">
                 <p><i class="fas fa-dollar-sign"></i> <strong>Salary:</strong> {{ template_data.job.salary_range }}</p>
@@ -21,8 +22,22 @@
                 {% if template_data.job.application_deadline %}
                 <p><i class="fas fa-clock"></i> <strong>Deadline:</strong> {{ template_data.job.application_deadline|date:"F d, Y" }}</p>
                 {% endif %}
+                {% if template_data.job.visa_sponsorship %}
+                <p><i class="fas fa-globe"></i> <strong>Visa Sponsorship:</strong> <span class="badge bg-success">Available</span></p>
+                {% endif %}
               </div>
             </div>
+            
+            {% if template_data.job.skills_list %}
+            <div class="mb-4">
+              <h5>Required Skills</h5>
+              <div class="d-flex flex-wrap gap-2">
+                {% for skill in template_data.job.skills_list %}
+                  <span class="badge bg-primary">{{ skill }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
             
             <hr>
             

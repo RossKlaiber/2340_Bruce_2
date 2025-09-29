@@ -53,6 +53,24 @@
               </div>
               
               <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="{{ template_data.form.work_type.id_for_label }}" class="form-label">Work Type *</label>
+                  {{ template_data.form.work_type }}
+                  {% if template_data.form.work_type.errors %}
+                    <div class="text-danger">{{ template_data.form.work_type.errors }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-8 mb-3">
+                  <label for="{{ template_data.form.skills.id_for_label }}" class="form-label">Required Skills</label>
+                  {{ template_data.form.skills }}
+                  {% if template_data.form.skills.errors %}
+                    <div class="text-danger">{{ template_data.form.skills.errors }}</div>
+                  {% endif %}
+                  <div class="form-text">{{ template_data.form.skills.help_text }}</div>
+                </div>
+              </div>
+              
+              <div class="row">
                 <div class="col-md-6 mb-3">
                   <label for="{{ template_data.form.salary_min.id_for_label }}" class="form-label">Minimum Salary</label>
                   {{ template_data.form.salary_min }}
@@ -96,13 +114,27 @@
                 <div class="form-text">{{ template_data.form.benefits.help_text }}</div>
               </div>
               
-              <div class="mb-3">
-                <label for="{{ template_data.form.application_deadline.id_for_label }}" class="form-label">Application Deadline</label>
-                {{ template_data.form.application_deadline }}
-                {% if template_data.form.application_deadline.errors %}
-                  <div class="text-danger">{{ template_data.form.application_deadline.errors }}</div>
-                {% endif %}
-                <div class="form-text">{{ template_data.form.application_deadline.help_text }}</div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="{{ template_data.form.application_deadline.id_for_label }}" class="form-label">Application Deadline</label>
+                  {{ template_data.form.application_deadline }}
+                  {% if template_data.form.application_deadline.errors %}
+                    <div class="text-danger">{{ template_data.form.application_deadline.errors }}</div>
+                  {% endif %}
+                  <div class="form-text">{{ template_data.form.application_deadline.help_text }}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="form-check mt-4">
+                    {{ template_data.form.visa_sponsorship }}
+                    <label for="{{ template_data.form.visa_sponsorship.id_for_label }}" class="form-check-label">
+                      Visa Sponsorship Available
+                    </label>
+                    {% if template_data.form.visa_sponsorship.errors %}
+                      <div class="text-danger">{{ template_data.form.visa_sponsorship.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">{{ template_data.form.visa_sponsorship.help_text }}</div>
+                  </div>
+                </div>
               </div>
               
               <div class="text-center">

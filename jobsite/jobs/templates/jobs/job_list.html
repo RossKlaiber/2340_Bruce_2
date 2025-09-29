@@ -5,7 +5,12 @@
     <div class="row">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2>Job Listings</h2>
+          <div>
+            <h2>Job Listings</h2>
+            {% if template_data.total_jobs %}
+            <small class="text-muted">{{ template_data.total_jobs }} job{{ template_data.total_jobs|pluralize }} found</small>
+            {% endif %}
+          </div>
           {% if user.is_authenticated and user.profile.is_recruiter %}
           <a href="{% url 'jobs.create' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Post a Job
@@ -13,37 +18,78 @@
           {% endif %}
         </div>
         
-        <!-- Search and Filter Form -->
+        <!-- Enhanced Search and Filter Form -->
         <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-search"></i> Search & Filter Jobs</h5>
+          </div>
           <div class="card-body">
-            <form method="GET" class="row g-3">
-              <div class="col-md-4">
-                <input type="text" name="search" class="form-control" 
-                       placeholder="Search jobs, companies, locations..." 
-                       value="{{ template_data.search_query }}">
+            <form method="GET" id="jobSearchForm">
+              <!-- First Row: Main Search and Location -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="{{ template_data.search_form.search.id_for_label }}" class="form-label">Search</label>
+                  {{ template_data.search_form.search }}
+                  <div class="form-text">Search by job title, company, location, skills, or description</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ template_data.search_form.location.id_for_label }}" class="form-label">Location</label>
+                  {{ template_data.search_form.location }}
+                  <div class="form-text">City, state, or country</div>
+                </div>
               </div>
-              <div class="col-md-3">
-                <select name="job_type" class="form-control">
-                  <option value="">All Job Types</option>
-                  {% for value, label in template_data.job_types %}
-                  <option value="{{ value }}" {% if template_data.job_type == value %}selected{% endif %}>
-                    {{ label }}
-                  </option>
-                  {% endfor %}
-                </select>
+              
+              <!-- Second Row: Skills and Job Type -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="{{ template_data.search_form.skills.id_for_label }}" class="form-label">Skills</label>
+                  {{ template_data.search_form.skills }}
+                  <div class="form-text">Comma-separated list of skills</div>
+                </div>
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.job_type.id_for_label }}" class="form-label">Job Type</label>
+                  {{ template_data.search_form.job_type }}
+                </div>
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.experience_level.id_for_label }}" class="form-label">Experience</label>
+                  {{ template_data.search_form.experience_level }}
+                </div>
               </div>
-              <div class="col-md-3">
-                <select name="experience_level" class="form-control">
-                  <option value="">All Experience Levels</option>
-                  {% for value, label in template_data.experience_levels %}
-                  <option value="{{ value }}" {% if template_data.experience_level == value %}selected{% endif %}>
-                    {{ label }}
-                  </option>
-                  {% endfor %}
-                </select>
+              
+              <!-- Third Row: Work Type, Salary Range, and Visa -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.work_type.id_for_label }}" class="form-label">Work Type</label>
+                  {{ template_data.search_form.work_type }}
+                </div>
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.salary_min.id_for_label }}" class="form-label">Min Salary</label>
+                  {{ template_data.search_form.salary_min }}
+                </div>
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.salary_max.id_for_label }}" class="form-label">Max Salary</label>
+                  {{ template_data.search_form.salary_max }}
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check mt-4">
+                    {{ template_data.search_form.visa_sponsorship }}
+                    <label for="{{ template_data.search_form.visa_sponsorship.id_for_label }}" class="form-check-label">
+                      Visa Sponsorship
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+              
+              <!-- Action Buttons -->
+              <div class="row g-3">
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Search Jobs
+                  </button>
+                  <a href="{% url 'jobs.list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear Filters
+                  </a>
+                </div>
               </div>
             </form>
           </div>
@@ -65,8 +111,20 @@
                   <p class="card-text">
                     <i class="fas fa-map-marker-alt"></i> {{ job.location }} |
                     <i class="fas fa-briefcase"></i> {{ job.get_job_type_display }} |
-                    <i class="fas fa-user-tie"></i> {{ job.get_experience_level_display }}
+                    <i class="fas fa-user-tie"></i> {{ job.get_experience_level_display }} |
+                    <i class="fas fa-home"></i> {{ job.get_work_type_display }}
+                    {% if job.visa_sponsorship %}
+                    | <span class="badge bg-info">Visa Sponsorship</span>
+                    {% endif %}
                   </p>
+                  {% if job.skills_list %}
+                  <p class="card-text">
+                    <strong>Skills:</strong> 
+                    {% for skill in job.skills_list %}
+                      <span class="badge bg-secondary me-1">{{ skill }}</span>
+                    {% endfor %}
+                  </p>
+                  {% endif %}
                   <p class="card-text">{{ job.description|truncatewords:30 }}</p>
                 </div>
                 <div class="col-md-4 text-end">
@@ -107,7 +165,7 @@
             <ul class="pagination justify-content-center">
               {% if template_data.page_obj.has_previous %}
               <li class="page-item">
-                <a class="page-link" href="?page={{ template_data.page_obj.previous_page_number }}{% if template_data.search_query %}&search={{ template_data.search_query }}{% endif %}{% if template_data.job_type %}&job_type={{ template_data.job_type }}{% endif %}{% if template_data.experience_level %}&experience_level={{ template_data.experience_level }}{% endif %}">Previous</a>
+                <a class="page-link" href="?page={{ template_data.page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
               </li>
               {% endif %}
               
@@ -118,14 +176,14 @@
                 </li>
                 {% elif num > template_data.page_obj.number|add:'-3' and num < template_data.page_obj.number|add:'3' %}
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ num }}{% if template_data.search_query %}&search={{ template_data.search_query }}{% endif %}{% if template_data.job_type %}&job_type={{ template_data.job_type }}{% endif %}{% if template_data.experience_level %}&experience_level={{ template_data.experience_level }}{% endif %}">{{ num }}</a>
+                  <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
                 </li>
                 {% endif %}
               {% endfor %}
               
               {% if template_data.page_obj.has_next %}
               <li class="page-item">
-                <a class="page-link" href="?page={{ template_data.page_obj.next_page_number }}{% if template_data.search_query %}&search={{ template_data.search_query }}{% endif %}{% if template_data.job_type %}&job_type={{ template_data.job_type }}{% endif %}{% if template_data.experience_level %}&experience_level={{ template_data.experience_level }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ template_data.page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
               </li>
               {% endif %}
             </ul>

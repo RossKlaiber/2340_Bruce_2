@@ -7,30 +7,84 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from .models import Job, Application
-from .forms import JobForm, ApplicationForm
+from .forms import JobForm, ApplicationForm, JobSearchForm
 
 def job_list(request):
-    """Display a list of all active jobs"""
+    """Display a list of all active jobs with enhanced search and filtering"""
+    # Initialize search form with GET parameters
+    search_form = JobSearchForm(request.GET)
+    
+    # Start with all active jobs
     jobs = Job.objects.filter(is_active=True)
     
-    # Add search functionality
-    search_query = request.GET.get('search')
-    if search_query:
-        jobs = jobs.filter(
-            models.Q(title__icontains=search_query) |
-            models.Q(company__icontains=search_query) |
-            models.Q(location__icontains=search_query) |
-            models.Q(description__icontains=search_query)
-        )
-    
-    # Add filtering
-    job_type = request.GET.get('job_type')
-    if job_type:
-        jobs = jobs.filter(job_type=job_type)
-    
-    experience_level = request.GET.get('experience_level')
-    if experience_level:
-        jobs = jobs.filter(experience_level=experience_level)
+    # Apply filters if form is valid
+    if search_form.is_valid():
+        # General search across title, company, location, description, and skills
+        search_query = search_form.cleaned_data.get('search')
+        if search_query:
+            jobs = jobs.filter(
+                models.Q(title__icontains=search_query) |
+                models.Q(company__icontains=search_query) |
+                models.Q(location__icontains=search_query) |
+                models.Q(description__icontains=search_query) |
+                models.Q(skills__icontains=search_query)
+            )
+        
+        # Location filter
+        location = search_form.cleaned_data.get('location')
+        if location:
+            jobs = jobs.filter(location__icontains=location)
+        
+        # Skills filter
+        skills = search_form.cleaned_data.get('skills')
+        if skills:
+            # Split skills and filter jobs that contain any of the specified skills
+            skill_list = [skill.strip() for skill in skills.split(',') if skill.strip()]
+            if skill_list:
+                skill_query = models.Q()
+                for skill in skill_list:
+                    skill_query |= models.Q(skills__icontains=skill)
+                jobs = jobs.filter(skill_query)
+        
+        # Job type filter
+        job_type = search_form.cleaned_data.get('job_type')
+        if job_type:
+            jobs = jobs.filter(job_type=job_type)
+        
+        # Experience level filter
+        experience_level = search_form.cleaned_data.get('experience_level')
+        if experience_level:
+            jobs = jobs.filter(experience_level=experience_level)
+        
+        # Work type filter
+        work_type = search_form.cleaned_data.get('work_type')
+        if work_type:
+            jobs = jobs.filter(work_type=work_type)
+        
+        # Salary range filter
+        salary_min = search_form.cleaned_data.get('salary_min')
+        salary_max = search_form.cleaned_data.get('salary_max')
+        
+        if salary_min:
+            # Jobs where salary_min >= user's min OR salary_max >= user's min
+            jobs = jobs.filter(
+                models.Q(salary_min__gte=salary_min) |
+                models.Q(salary_max__gte=salary_min) |
+                models.Q(salary_min__isnull=True, salary_max__gte=salary_min)
+            )
+        
+        if salary_max:
+            # Jobs where salary_max <= user's max OR salary_min <= user's max
+            jobs = jobs.filter(
+                models.Q(salary_max__lte=salary_max) |
+                models.Q(salary_min__lte=salary_max) |
+                models.Q(salary_max__isnull=True, salary_min__lte=salary_max)
+            )
+        
+        # Visa sponsorship filter
+        visa_sponsorship = search_form.cleaned_data.get('visa_sponsorship')
+        if visa_sponsorship:
+            jobs = jobs.filter(visa_sponsorship=True)
     
     # Pagination
     paginator = Paginator(jobs, 10)  # Show 10 jobs per page
@@ -54,11 +108,8 @@ def job_list(request):
     template_data = {
         'title': 'Job Listings',
         'page_obj': page_obj,
-        'search_query': search_query,
-        'job_type': job_type,
-        'experience_level': experience_level,
-        'job_types': Job.JOB_TYPES,
-        'experience_levels': Job.EXPERIENCE_LEVELS,
+        'search_form': search_form,
+        'total_jobs': jobs.count(),
     }
     
     return render(request, 'jobs/job_list.html', {'template_data': template_data})
