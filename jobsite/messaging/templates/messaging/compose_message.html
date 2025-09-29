@@ -23,7 +23,35 @@
             {{ form.body }}
         </div>
         
-   <button type="submit" class="btn btn-primary mt-4">Send Message</button>
+        <button type="submit" class="btn btn-primary mt-4" id="sendMessageButton">Send Message</button>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const recipientField = document.getElementById('id_recipient');
+        const subjectField = document.getElementById('id_subject');
+        const bodyField = document.getElementById('id_body');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+
+        function toggleSendMessageButton() {
+            if (recipientField.value && subjectField.value && bodyField.value) {
+                sendMessageButton.removeAttribute('disabled');
+            } else {
+                sendMessageButton.setAttribute('disabled', 'disabled');
+            }
+        }
+
+        // Initial check
+        toggleSendMessageButton();
+
+        // Listen for changes
+        recipientField.addEventListener('change', toggleSendMessageButton);
+        recipientField.addEventListener('keyup', toggleSendMessageButton);
+        bodyField.addEventListener('change', toggleSendMessageButton);
+        bodyField.addEventListener('keyup', toggleSendMessageButton);
+        subjectField.addEventListener('change', toggleSendMessageButton);
+        subjectField.addEventListener('keyup', toggleSendMessageButton);
+    });
+</script>
 {% endblock %}
