@@ -1,42 +1,41 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="p-3 mt-4">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card shadow p-3 mb-4 rounded">
+<div class="modal fade" id="deleteExperienceModal_{{ experience.id }}" tabindex="-1"
+  aria-labelledby="deleteExperienceModal_{{ experience.id }}Label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteExperienceModal_{{ experience.id }}Label">
+          <i class="fas fa-trash-alt text-danger"></i> Confirm Delete Work Experience
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">Are you sure you want to delete the following work experience entry?</p>
+
+        <div class="card mb-3">
           <div class="card-body">
-            <h2 class="card-title text-center mb-4">
-              <i class="fas fa-trash-alt text-danger"></i> Confirm Delete Work Experience
-            </h2>
-            <hr />
-
-            <p class="text-center">Are you sure you want to delete the following work experience entry?</p>
-            
-            <div class="card mb-3">
-              <div class="card-body">
-                <h5 class="card-title">{{ template_data.experience.position }} at {{ template_data.experience.company }}</h5>
-                {% if template_data.experience.location %}<p class="text-muted">{{ template_data.experience.location }}</p>{% endif %}
-                <p class="card-text">
-                  {{ template_data.experience.start_date|date:"M Y" }} - 
-                  {% if template_data.experience.is_current %}Present{% else %}{{ template_data.experience.end_date|date:"M Y" }}{% endif %}
-                </p>
-              </div>
-            </div>
-
-            <form method="post" action="{% url 'accounts.delete_experience' template_data.experience.id %}">
-              {% csrf_token %}
-              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="{% url 'accounts.profile' request.user.username %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                <button type="submit" class="btn btn-danger">
-                  <i class="fas fa-trash-alt"></i> Delete
-                </button>
-              </div>
-            </form>
+            <h5 class="card-title">{{ experience.position }} at {{ experience.company }}</h5>
+            {% if experience.location %}<p class="text-muted">{{ experience.location }}</p>{% endif %}
+            <p class="card-text">
+              {{ experience.start_date|date:"M Y" }} -
+              {% if experience.is_current %}Present{% else %}{{ experience.end_date|date:"M Y" }}{% endif %}
+            </p>
           </div>
         </div>
       </div>
+
+      <div class="modal-footer">
+        <form method="post" action="{% url 'accounts.delete_experience' experience.id %}"
+          id="deleteExperienceForm_{{ experience.id }}">
+          {% csrf_token %}
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="button" class="btn btn-outline-secondary me-md-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash-alt"></i> Delete
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   </div>
 </div>
-{% endblock content %}

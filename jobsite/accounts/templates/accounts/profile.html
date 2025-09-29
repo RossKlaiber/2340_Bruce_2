@@ -117,9 +117,11 @@
                       <a href="{% url 'accounts.edit_education' education.id %}" class="btn btn-outline-primary btn-sm me-2">
                         <i class="fas fa-edit"></i> Edit
                       </a>
-                      <a href="{% url 'accounts.delete_education' education.id %}" class="btn btn-outline-danger btn-sm">
+
+                      <button type="button" class="btn btn-outline-danger btn-sm open-modal" data-bs-toggle="modal" data-bs-target="#deleteEducationModal_{{ education.id }}">
                         <i class="fas fa-trash-alt"></i> Delete
-                      </a>
+                      </button>
+                      
                     </div>
                     {% endif %}
                   </div>
@@ -163,9 +165,9 @@
                       <a href="{% url 'accounts.edit_experience' experience.id %}" class="btn btn-outline-primary btn-sm me-2">
                         <i class="fas fa-edit"></i> Edit
                       </a>
-                      <a href="{% url 'accounts.delete_experience' experience.id %}" class="btn btn-outline-danger btn-sm">
+                      <button type="button" class="btn btn-outline-danger btn-sm open-modal" data-bs-toggle="modal" data-bs-target="#deleteExperienceModal_{{ experience.id }}">
                         <i class="fas fa-trash-alt"></i> Delete
-                      </a>
+                      </button>
                     </div>
                     {% endif %}
                   </div>
@@ -279,4 +281,13 @@
     </div>
   </div>
 </div>
+
+{% for education in template_data.job_seeker_profile.education.all %}
+  {% include 'accounts/confirm_delete_education.html' with education=education %}
+{% endfor %}
+
+{% for experience in template_data.job_seeker_profile.work_experience.all %}
+  {% include 'accounts/confirm_delete_experience.html' with experience=experience %}
+{% endfor %}
+
 {% endblock content %}
