@@ -58,8 +58,10 @@ def inbox(request):
     })
 
 @login_required
-def compose_message(request, recipient_id):
-    recipient = get_object_or_404(User, id=recipient_id)
+def compose_message(request, recipient_id=None):
+    recipient = None
+    if recipient_id:
+        recipient = get_object_or_404(User, id=recipient_id)
 
     if request.method == 'POST':
         form = MessageForm(request.POST)

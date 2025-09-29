@@ -9,12 +9,12 @@
         <p><strong>To:</strong> {{ recipient.username }}</p>
         {{ form.recipient }} {# Hidden input for recipient #}
         {% else %}
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="{{ form.recipient.id_for_label }}">Recipient:</label>
             {{ form.recipient }}
         </div>
         {% endif %}
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="{{ form.subject.id_for_label }}">Subject:</label>
             {{ form.subject }}
         </div>
