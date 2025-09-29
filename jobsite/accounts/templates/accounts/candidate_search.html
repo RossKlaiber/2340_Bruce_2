@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 mt-4">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-12 text-center">
+        <h1 class="fw-bold text-success">Find Talent</h1>
+        <p class="lead">Search candidates by skills, location, and project keywords</p>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <form method="get" class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Skills</label>
+                {{ template_data.form.skills }}
+                <div class="form-text">Comma-separated</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Location</label>
+                {{ template_data.form.location }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Projects</label>
+                {{ template_data.form.projects }}
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-search"></i> Search
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            {% if template_data.results %}
+              <div class="list-group list-group-flush">
+                {% for js in template_data.results %}
+                  <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h5 class="mb-1">{{ js.user_profile.user.first_name }} {{ js.user_profile.user.last_name }}</h5>
+                        {% if js.headline %}
+                          <p class="mb-1 text-muted">{{ js.headline }}</p>
+                        {% endif %}
+                        {% if js.location %}
+                          <p class="mb-1"><i class="fas fa-map-marker-alt text-danger"></i> {{ js.location }}</p>
+                        {% endif %}
+                        {% if js.skills %}
+                          <div class="mt-2">
+                            {% for s in js.skills_list %}
+                              <span class="badge bg-light text-dark border me-1">{{ s }}</span>
+                            {% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div class="text-end">
+                        <a href="{% url 'accounts.profile' js.user_profile.user.username %}" class="btn btn-outline-success">
+                          View Profile
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">No candidates match your criteria.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+
