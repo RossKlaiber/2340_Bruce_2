@@ -6,8 +6,8 @@ class JobForm(forms.ModelForm):
         model = Job
         fields = [
             'title', 'company', 'location', 'job_type', 'experience_level',
-            'salary_min', 'salary_max', 'description', 'requirements',
-            'benefits', 'application_deadline'
+            'work_type', 'skills', 'salary_min', 'salary_max', 'visa_sponsorship',
+            'description', 'requirements', 'benefits', 'application_deadline'
         ]
         widgets = {
             'title': forms.TextInput(attrs={
@@ -24,6 +24,11 @@ class JobForm(forms.ModelForm):
             }),
             'job_type': forms.Select(attrs={'class': 'form-control'}),
             'experience_level': forms.Select(attrs={'class': 'form-control'}),
+            'work_type': forms.Select(attrs={'class': 'form-control'}),
+            'skills': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Python, Django, React, AWS'
+            }),
             'salary_min': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., 80000',
@@ -34,6 +39,7 @@ class JobForm(forms.ModelForm):
                 'placeholder': 'e.g., 120000',
                 'step': '1000'
             }),
+            'visa_sponsorship': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 6,
@@ -62,12 +68,15 @@ class JobForm(forms.ModelForm):
         self.fields['salary_max'].required = False
         self.fields['benefits'].required = False
         self.fields['application_deadline'].required = False
+        self.fields['skills'].required = False
         
         # Add help text
         self.fields['salary_min'].help_text = 'Minimum salary (optional)'
         self.fields['salary_max'].help_text = 'Maximum salary (optional)'
         self.fields['benefits'].help_text = 'Benefits and perks (optional)'
         self.fields['application_deadline'].help_text = 'Application deadline (optional)'
+        self.fields['skills'].help_text = 'Comma-separated list of required skills (optional)'
+        self.fields['visa_sponsorship'].help_text = 'Check if this position offers visa sponsorship'
 
 
 class ApplicationForm(forms.ModelForm):
@@ -89,3 +98,79 @@ class ApplicationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cover_note'].help_text = 'Write a personalized note to accompany your application'
+
+
+class JobSearchForm(forms.Form):
+    """Form for searching and filtering jobs"""
+    
+    search = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search jobs, companies, locations, skills...'
+        })
+    )
+    
+    location = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., San Francisco, CA'
+        })
+    )
+    
+    skills = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Python, Django, React'
+        })
+    )
+    
+    job_type = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Job Types')] + Job.JOB_TYPES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    experience_level = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Experience Levels')] + Job.EXPERIENCE_LEVELS,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    work_type = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Work Types')] + Job.WORK_TYPES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    salary_min = forms.DecimalField(
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Min salary',
+            'step': '1000'
+        })
+    )
+    
+    salary_max = forms.DecimalField(
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Max salary',
+            'step': '1000'
+        })
+    )
+    
+    visa_sponsorship = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )

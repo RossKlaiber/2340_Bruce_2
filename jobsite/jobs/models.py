@@ -18,13 +18,22 @@ class Job(models.Model):
         ('executive', 'Executive'),
     ]
     
+    WORK_TYPES = [
+        ('remote', 'Remote'),
+        ('onsite', 'On-site'),
+        ('hybrid', 'Hybrid'),
+    ]
+    
     title = models.CharField(max_length=200)
     company = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
     job_type = models.CharField(max_length=20, choices=JOB_TYPES, default='full-time')
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVELS, default='entry')
+    work_type = models.CharField(max_length=20, choices=WORK_TYPES, default='onsite')
+    skills = models.TextField(blank=True, help_text="Comma-separated list of required skills")
     salary_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    visa_sponsorship = models.BooleanField(default=False, help_text="Does this position offer visa sponsorship?")
     description = models.TextField()
     requirements = models.TextField()
     benefits = models.TextField(blank=True)
@@ -50,6 +59,13 @@ class Job(models.Model):
             return f"Up to ${self.salary_max:,.0f}"
         else:
             return "Salary not specified"
+    
+    @property
+    def skills_list(self):
+        """Return skills as a list"""
+        if self.skills:
+            return [skill.strip() for skill in self.skills.split(',') if skill.strip()]
+        return []
 
 
 class Application(models.Model):
