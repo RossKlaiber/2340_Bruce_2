@@ -9,16 +9,25 @@
           <div class="mb-3">
             <i class="fas fa-user-tie fa-4x text-primary"></i>
           </div>
+
+          {% if template_data.new_user %}
           <h1 class="display-4 fw-bold text-primary">Welcome to JobSite!</h1>
           <p class="lead">You're now part of our community of talented professionals</p>
           <div class="alert alert-success" role="alert">
             <i class="fas fa-check-circle"></i> Your job seeker account has been created successfully!
           </div>
+          {% else %}
+          <h1 class="display-4 fw-bold text-primary">Job Seeker Dashboard</h1>
+          <p class="lead">Apply to jobs, track applications, and connect with recruiters.</p>
+          {% endif %}
+
+
         </div>
       </div>
     </div>
 
     <!-- Quick Actions -->
+    {% if template_data.new_user %}
     <div class="row mb-5">
       <div class="col-12">
         <h2 class="text-center mb-4">Get Started</h2>
@@ -85,6 +94,48 @@
         </div>
       </div>
     </div>
+    {% else %}
+    <!-- Recommended Jobs Section -->
+    
+    <div class="row mb-5">
+      <div class="col-12">
+        <h2 class="text-center mb-4">Recommended Jobs for You</h2>
+        {% if template_data.recommended_jobs %}
+        <div class="row g-4">
+          {% for job in template_data.recommended_jobs %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-primary">{{ job.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ job.company }} - {{ job.location }}</h6>
+                <p class="card-text flex-grow-1">{{ job.description|truncatechars:150 }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <a href="{% url 'jobs.detail' job.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                  <span class="badge bg-info text-dark">{{ job.job_type }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if template_data.num_recommended_jobs > 3 %}
+        <div class="row mt-4">
+          <div class="col text-center">
+            <a class="btn btn-primary d-inline-block" href="{% url 'jobs.list' %}?recommended=true">View all Recommended Jobs</a>
+          </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="col-12">
+          <div class="alert alert-info text-center" role="alert">
+            No job recommendations available. <a href="{% url 'jobs.list' %}">Browse all jobs</a>, or add more skills to your profile to get personalized recommendations!
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% endif %}
 
     <!-- Application Status Summary -->
     {% if template_data.application_stats.total > 0 %}
@@ -204,17 +255,17 @@
     </div>
 
     <!-- Next Steps -->
-    <div class="row">
+    <div class="row mb-4">
       <div class="col-12">
         <div class="text-center">
           <h3>What's Next?</h3>
           <p class="lead">Complete your profile to increase your visibility to recruiters</p>
           <div class="d-flex gap-3 justify-content-center">
-            <a href="{% url 'accounts.profile' user.username %}" class="btn btn-outline-primary">
+            <a href="{% url 'accounts.profile' user.username %}" class="btn btn-outline-primary btn-lg">
               <i class="fas fa-user"></i> View My Profile
             </a>
-            <a href="{% url 'jobs.list' %}" class="btn btn-primary">
-              <i class="fas fa-search"></i> Start Job Search
+            <a href="{% url 'jobs.list' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-search"></i> Search for Jobs
             </a>
           </div>
         </div>

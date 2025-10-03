@@ -9,11 +9,16 @@
           <div class="mb-3">
             <i class="fas fa-briefcase fa-4x text-success"></i>
           </div>
+          {% if template_data.new_user %}
           <h1 class="display-4 fw-bold text-success">Welcome to JobSite!</h1>
-          <p class="lead">You're now ready to find and hire the best talent</p>
+          <p class="lead">You're now ready to find and hire the best talent.</p>
           <div class="alert alert-success" role="alert">
             <i class="fas fa-check-circle"></i> Your recruiter account has been created successfully!
           </div>
+          {% else %}
+          <h1 class="display-4 fw-bold text-success">Recruiter Dashboard</h1>
+          <p class="lead">Manage your jobs, track applications, and connect with top candidates.</p>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -21,8 +26,9 @@
     <!-- Quick Actions -->
     <div class="row mb-5">
       <div class="col-12">
-        <h2 class="text-center mb-4">Get Started</h2>
+        <h2 class="text-center mb-4">{% if template_data.new_user %}Get Started{% else %}Quick Actions{% endif %}</h2>
         <div class="row g-4">
+          {% if template_data.new_user %}
           <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
@@ -30,14 +36,15 @@
                   <i class="fas fa-building fa-3x text-success"></i>
                 </div>
                 <h5 class="card-title">Complete Company Profile</h5>
-                <p class="card-text">Add your company details, description, and culture to attract the right candidates.</p>
+                <p class="card-text">Add your company details, description, and culture to attract the right candidates.
+                </p>
                 <a href="{% url 'accounts.edit_profile' %}" class="btn btn-success">
                   <i class="fas fa-edit"></i> Edit Profile
                 </a>
               </div>
             </div>
           </div>
-          
+
           <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
@@ -52,7 +59,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
@@ -67,6 +74,37 @@
               </div>
             </div>
           </div>
+          {% else %}
+                    <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-list-alt fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Manage Job Postings</h5>
+                <p class="card-text">Edit, view, or close your active job listings.</p>
+                <a href="{% url 'jobs.my_jobs' %}" class="btn btn-success">
+                  <i class="fas fa-briefcase"></i> My Jobs
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="mb-3">
+                  <i class="fas fa-users fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Browse Candidates</h5>
+                <p class="card-text">Discover talented professionals looking for new opportunities.</p>
+                <a href="{% url 'accounts.candidate_search' %}" class="btn btn-primary">
+                  <i class="fas fa-search"></i> Find Talent
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -78,18 +116,19 @@
           <div class="card-body p-5">
             <div class="row align-items-center">
               <div class="col-md-8">
-                <h3 class="card-title">Ready to Post Your First Job?</h3>
+                <h3 class="card-title">Streamline Your Hiring Process</h3>
                 <p class="card-text">Create a compelling job posting that will attract the best candidates for your open positions.</p>
                 <ul class="list-unstyled">
-                  <li><i class="fas fa-check text-success"></i> Detailed job descriptions</li>
-                  <li><i class="fas fa-check text-success"></i> Salary and benefits information</li>
-                  <li><i class="fas fa-check text-success"></i> Application management tools</li>
+                  <li><i class="fas fa-check text-success"></i> Create detailed and attractive job postings</li>
+                  <li><i class="fas fa-check text-success"></i> Easily manage all incoming applications</li>
+                  <li><i class="fas fa-check text-success"></i> Communicate directly with candidates</li>
+                  <li><i class="fas fa-check text-success"></i> Track application statuses at a glance</li>
                 </ul>
               </div>
               <div class="col-md-4 text-center">
-                <i class="fas fa-file-alt fa-4x text-success mb-3"></i>
+                <i class="fas fa-clipboard-list fa-4x text-primary mb-3"></i>
                 <br>
-                <a href="{% url 'jobs.create' %}" class="btn btn-success btn-lg">
+                <a href="{% url 'jobs.create' %}" class="btn btn-primary btn-lg">
                   <i class="fas fa-plus"></i> Post a Job
                 </a>
               </div>
@@ -136,30 +175,19 @@
           <div class="card-body text-center p-5">
             <h3>Your Hiring Dashboard</h3>
             <p class="text-muted">Track your hiring progress and manage applications</p>
-            <div class="row g-4 mt-4">
-              <div class="col-md-3">
+            <div class="row g-4 mt-2">
+              <div class="col-md-6">
                 <div class="text-center">
-                  <h4 class="text-primary">0</h4>
+                  <h1 class="display-4 fw-semibold text-primary">{{ template_data.jobs_posted_count }}</h1>
                   <p class="text-muted">Jobs Posted</p>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-6">
                 <div class="text-center">
-                  <h4 class="text-success">0</h4>
-                  <p class="text-muted">Applications</p>
+                  <h1 class="display-4 fw-semibold text-success">{{ template_data.new_applications_count }}</h1>
+                  <p class="text-muted">New Applications</p>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="text-center">
-                  <h4 class="text-info">0</h4>
-                  <p class="text-muted">Candidates Viewed</p>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="text-center">
-                  <h4 class="text-warning">0</h4>
-                  <p class="text-muted">Hires Made</p>
-                </div>
               </div>
             </div>
           </div>
@@ -168,17 +196,20 @@
     </div>
 
     <!-- Next Steps -->
-    <div class="row">
+    <div class="row mb-4">
       <div class="col-12">
         <div class="text-center">
           <h3>What's Next?</h3>
-          <p class="lead">Start building your team by posting your first job</p>
+          <p class="lead">Explore these options to maximize your hiring success.</p>
           <div class="d-flex gap-3 justify-content-center">
-            <a href="{% url 'accounts.profile' user.username %}" class="btn btn-outline-success">
-              <i class="fas fa-building"></i> Company Profile
+            <a href="{% url 'jobs.create' %}" class="btn btn-outline-success btn-lg">
+              <i class="fas fa-plus"></i> Post a New Job
             </a>
-            <a href="{% url 'jobs.create' %}" class="btn btn-success">
-              <i class="fas fa-plus"></i> Post First Job
+            <a href="{% url 'accounts.candidate_search' %}" class="btn btn-outline-primary btn-lg">
+              <i class="fas fa-search"></i> Search Candidates
+            </a>
+            <a href="{% url 'jobs.my_jobs' %}" class="btn btn-outline-info btn-lg">
+              <i class="fas fa-briefcase"></i> Manage My Jobs
             </a>
           </div>
         </div>

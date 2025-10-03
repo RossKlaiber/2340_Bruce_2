@@ -9,8 +9,7 @@ from .forms import (
     RecruiterSignupForm, JobSeekerProfileForm, RecruiterProfileForm,
     EducationForm, WorkExperienceForm, PrivacySettingsForm, CandidateSearchForm
 )
-from .models import UserProfile, JobSeekerProfile, RecruiterProfile, Education, WorkExperience
-from jobs.models import Application
+from .models import UserProfile, JobSeekerProfile, Education, WorkExperience
 from django.db.models import Q
 
 @login_required
@@ -71,7 +70,7 @@ def job_seeker_signup(request):
             messages.success(request, 'Account created successfully! Welcome to JobSite!')
             # Auto-login the user after signup
             auth_login(request, user)
-            return redirect('accounts.job_seeker_dashboard')
+            return redirect('home.dashboard/?new_user=true')
         else:
             template_data['form'] = form
     else:
@@ -90,7 +89,7 @@ def recruiter_signup(request):
             messages.success(request, 'Account created successfully! Welcome to JobSite!')
             # Auto-login the user after signup
             auth_login(request, user)
-            return redirect('accounts.recruiter_dashboard')
+            return redirect('home.dashboard/?new_user=true')
         else:
             template_data['form'] = form
     else:
@@ -263,48 +262,6 @@ def delete_experience(request, experience_id):
         
     template_data = {'title': 'Confirm Delete Work Experience', 'experience': experience}
     return render(request, 'accounts/confirm_delete_experience.html', {'template_data': template_data})
-
-@login_required
-def job_seeker_dashboard(request):
-    """Job seeker dashboard/landing page"""
-    if not request.user.profile.is_job_seeker:
-        messages.error(request, 'Access denied.')
-        return redirect('home.index')
-    
-    # Get application statistics
-    applications = Application.objects.filter(applicant=request.user)
-    application_stats = {
-        'total': applications.count(),
-        'applied': applications.filter(status='applied').count(),
-        'review': applications.filter(status='review').count(),
-        'interview': applications.filter(status='interview').count(),
-        'offer': applications.filter(status='offer').count(),
-        'closed': applications.filter(status='closed').count(),
-    }
-    
-    template_data = {
-        'title': 'Job Seeker Dashboard',
-        'user_profile': request.user.profile,
-        'job_seeker_profile': request.user.profile.job_seeker_profile,
-        'application_stats': application_stats,
-    }
-    
-    return render(request, 'accounts/job_seeker_dashboard.html', {'template_data': template_data})
-
-@login_required
-def recruiter_dashboard(request):
-    """Recruiter dashboard/landing page"""
-    if not request.user.profile.is_recruiter:
-        messages.error(request, 'Access denied.')
-        return redirect('home.index')
-    
-    template_data = {
-        'title': 'Recruiter Dashboard',
-        'user_profile': request.user.profile,
-        'recruiter_profile': request.user.profile.recruiter_profile,
-    }
-    
-    return render(request, 'accounts/recruiter_dashboard.html', {'template_data': template_data})
 
 @login_required
 def candidate_search(request):
