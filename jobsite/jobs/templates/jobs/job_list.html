@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2>Job Listings</h2>
+            <h2>{% if template_data.recommended %}Recommended Jobs{% else %}Job Listings{% endif %}</h2>
             {% if template_data.total_jobs %}
             <small class="text-muted">{{ template_data.total_jobs }} job{{ template_data.total_jobs|pluralize }} found</small>
             {% endif %}

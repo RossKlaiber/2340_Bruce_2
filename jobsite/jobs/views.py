@@ -6,6 +6,8 @@ from django.db import models
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+
+from jobs.recommendations import get_recommended_jobs
 from .models import Job, Application
 from .forms import JobForm, ApplicationForm, JobSearchForm
 
@@ -13,9 +15,13 @@ def job_list(request):
     """Display a list of all active jobs with enhanced search and filtering"""
     # Initialize search form with GET parameters
     search_form = JobSearchForm(request.GET)
+    recommended = request.GET.get("recommended") == "true"
     
     # Start with all active jobs
-    jobs = Job.objects.filter(is_active=True)
+    if recommended:
+        jobs = get_recommended_jobs(request)
+    else:
+        jobs = Job.objects.filter(is_active=True)
     
     # Apply filters if form is valid
     if search_form.is_valid():
@@ -106,10 +112,11 @@ def job_list(request):
             pass
     
     template_data = {
-        'title': 'Job Listings',
+        'title': 'Recommended Jobs' if recommended else 'Job Listings',
         'page_obj': page_obj,
         'search_form': search_form,
         'total_jobs': jobs.count(),
+        'recommended': recommended,
     }
     
     return render(request, 'jobs/job_list.html', {'template_data': template_data})
