@@ -9,9 +9,13 @@
         <p><strong>To:</strong> {{ recipient.username }}</p>
         {{ form.recipient }} {# Hidden input for recipient #}
         {% else %}
-        <div class="form-group mb-3">
-            <label for="{{ form.recipient.id_for_label }}">Recipient:</label>
-            {{ form.recipient }}
+        <div class="form-group mb-3 position-relative">
+            <label for="{{ form.recipient_autocomplete.id_for_label }}">Recipient:</label>
+            <div class="input-group">
+                {{ form.recipient_autocomplete }}
+                <button type="button" id="clearRecipientButton" class="btn btn-outline-secondary" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            {{ form.recipient }} {# Hidden input for recipient #}
         </div>
         {% endif %}
         <div class="form-group mb-2">
@@ -28,11 +32,36 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(function() {
+        $("#id_recipient_autocomplete").autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: "{% url 'messaging:search_users' %}",
+                    dataType: "json",
+                    data: { term: request.term },
+                    success: function(data) {
+                        response(data);
+                    }
+                });
+            },
+            autoFocus: true,
+            minLength: 1,
+            select: function(event, ui) {
+                $('#id_recipient').val(ui.item.id);
+                $('#id_recipient_autocomplete').val(ui.item.label);
+                $('#id_recipient_autocomplete').prop('disabled', true);
+                $('#clearRecipientButton').show();
+                toggleSendMessageButton();
+                return false;
+            }
+        });
+
+        const recipientAutocompleteField = document.getElementById('id_recipient_autocomplete');
         const recipientField = document.getElementById('id_recipient');
         const subjectField = document.getElementById('id_subject');
         const bodyField = document.getElementById('id_body');
         const sendMessageButton = document.getElementById('sendMessageButton');
+        const clearRecipientButton = document.getElementById('clearRecipientButton');
 
         function toggleSendMessageButton() {
             if (recipientField.value && subjectField.value && bodyField.value) {
@@ -42,16 +71,28 @@
             }
         }
 
+        // Clear recipient selection
+        if (clearRecipientButton) {
+            clearRecipientButton.addEventListener('click', function() {
+                recipientAutocompleteField.value = '';
+                recipientField.value = '';
+                recipientAutocompleteField.disabled = false;
+                recipientAutocompleteField.focus();
+                $(clearRecipientButton).hide();
+                toggleSendMessageButton();
+            });
+        }
+
         // Initial check
         toggleSendMessageButton();
 
         // Listen for changes
-        recipientField.addEventListener('change', toggleSendMessageButton);
-        recipientField.addEventListener('keyup', toggleSendMessageButton);
-        bodyField.addEventListener('change', toggleSendMessageButton);
-        bodyField.addEventListener('keyup', toggleSendMessageButton);
-        subjectField.addEventListener('change', toggleSendMessageButton);
-        subjectField.addEventListener('keyup', toggleSendMessageButton);
+        [recipientAutocompleteField, subjectField, bodyField].forEach(field => {
+            if (field) {
+                field.addEventListener('input', toggleSendMessageButton);
+                field.addEventListener('change', toggleSendMessageButton);
+            }
+        });
     });
 </script>
 {% endblock %}
