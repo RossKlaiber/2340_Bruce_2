@@ -193,9 +193,10 @@
             </li>
             {% elif num > template_data.page_obj.number|add:'-3' and num < template_data.page_obj.number|add:'3' %} <li
               class="page-item">
-              <a class="page-link"
-                href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{
-                num }}</a>
+                <a class="page-link"
+                  href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                  {{ num }}
+                </a>
               </li>
               {% endif %}
               {% endfor %}
