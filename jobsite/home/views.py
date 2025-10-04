@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from jobs.models import Job, Application
 from jobs.recommendations import get_recommended_jobs
+from candidates.utils import update_saved_searches_with_new_matches
 
 def index(request):
     if request.user.is_authenticated:
@@ -61,12 +62,15 @@ def dashboard(request):
 
         # Get applications for jobs posted by the recruiter
         new_applications_count = Application.objects.filter(job__in=recruiter_jobs, status='applied').count()
+
+        total_new_candidate_matches = update_saved_searches_with_new_matches(request.user.profile)
         
         template_data = {
             'title': 'Recruiter Dashboard',
             'new_user': new_user,
             'jobs_posted_count': jobs_posted_count,
             'new_applications_count': new_applications_count,
+            'total_new_candidate_matches': total_new_candidate_matches,
         }
         
         return render(request, 'home/recruiter_dashboard.html', {'template_data': template_data})

@@ -22,12 +22,17 @@
         {% for search in template_data.saved_searches %}
         <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 shadow-sm rounded p-3">
             <div class="d-flex w-100 justify-content-between">
+                <div class="d-flex align-items-center gap-3 justify-content-between">
                 <h4 class="mb-1">{{ search.search_input|default:"[Empty Search]" }}</h4>
+                {% if search.new_matches_count > 0 %}<p class="mb-0 text-danger fw-semibold">NEW MATCHES!</p>{% endif %}
+                </div>
                 <small class="text-muted">Saved: {{ search.created_at|date:"M d, Y" }}</small>
             </div>
             <p class="mb-1 text-secondary">
-                {% if search.skills %}<span class="fw-semibold">Skills:</span> {{ search.skills }} | {% endif %}
-                {% if search.projects %}<span class="fw-semibold">Projects:</span> {{ search.projects }} | {% endif %}
+                {% if search.skills %}<span class="fw-semibold">Skills:</span> {{ search.skills }}{% endif %}
+                {% if search.skills and search.projects or search.skills and search.location %} | {% endif %}
+                {% if search.projects %}<span class="fw-semibold">Projects:</span> {{ search.projects }}{% endif %}
+                {% if search.location and search.projects or search.location and search.skills %} | {% endif %}
                 {% if search.location %}<span class="fw-semibold">Location:</span> {{ search.location }}{% endif %}
             </p>
             <div class="d-flex justify-content-end mt-2 gap-2">

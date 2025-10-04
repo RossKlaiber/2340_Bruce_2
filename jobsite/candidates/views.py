@@ -6,56 +6,56 @@ from django.contrib import messages
 from .forms import CandidateSearchForm
 from accounts.models import JobSeekerProfile
 from .models import SavedCandidateSearch
-from django.db.models import Q
+
+from .utils import (
+    update_saved_searches_with_new_matches,
+    save_candidate_search,
+    perform_candidate_search
+)
 
 @login_required
 def candidate_search(request):
-    """Recruiter candidate search by skills, location, and projects"""
     if not request.user.profile.is_recruiter:
         messages.error(request, 'Access denied.')
         return redirect('home.index')
+
+    # Update all saved searches with new matches
+    total_new_candidate_matches = update_saved_searches_with_new_matches(request.user.profile)
 
     form = CandidateSearchForm(request.GET or None)
     results = JobSeekerProfile.objects.filter(profile_visibility='public')
 
     if form.is_valid():
         search_input = form.cleaned_data.get('search_input')
-        skills_list = form.cleaned_skills_list()
+        skills_str = form.cleaned_data.get('skills')
         location = form.cleaned_data.get('location')
         projects = form.cleaned_data.get('projects')
 
-        # Apply search_input filter
-        if search_input:
-            search_query = (
-                Q(headline__icontains=search_input) |
-                Q(summary__icontains=search_input) |
-                Q(skills__icontains=search_input) |
-                Q(location__icontains=search_input) |
-                Q(education__institution__icontains=search_input) |
-                Q(education__degree__icontains=search_input) |
-                Q(education__field_of_study__icontains=search_input) |
-                Q(education__description__icontains=search_input) |
-                Q(work_experience__company__icontains=search_input) |
-                Q(work_experience__description__icontains=search_input) |
-                Q(work_experience__position__icontains=search_input) |
-                Q(user_profile__user__first_name__icontains=search_input) |
-                Q(user_profile__user__last_name__icontains=search_input)
-            )
-            results = results.filter(search_query).distinct()
+        existing_search = SavedCandidateSearch.objects.filter(
+            recruiter=request.user.profile,
+            search_input=search_input,
+            skills=skills_str,
+            location=location,
+            projects=projects
+        ).first()
 
-        # Apply skills filter
-        if skills_list:
-            for skill in skills_list:
-                results = results.filter(skills__icontains=skill)
+        if existing_search:
+            total_new_candidate_matches -= existing_search.new_matches_count
+            existing_search.new_matches_count = 0
+            existing_search.save(update_fields=["new_matches_count"])
 
-        # Apply location filter
-        if location:
-            results = results.filter(location__icontains=location)
+        results = perform_candidate_search(search_input, skills_str, location, projects)
 
-        # Apply projects filter
-        if projects:
-            project_query = Q(summary__icontains=projects) | Q(work_experience__description__icontains=projects)
-            results = results.filter(project_query).distinct()
+    if total_new_candidate_matches > 0:
+        saved_url = reverse('candidates.saved_candidate_searches')
+        messages.info(request, mark_safe(
+            f'You have {total_new_candidate_matches} new match(es) for saved searches. '
+            f'View your <a href="{saved_url}">saved searches</a>.'
+        ))
+
+    # Handle saving
+    if request.method == 'GET' and 'save_action' in request.GET:
+        save_candidate_search(request, request.user.profile)
 
     template_data = {
         'title': 'Find Talent',
@@ -63,47 +63,26 @@ def candidate_search(request):
         'results': results.select_related('user_profile__user')[:50],
     }
 
-    # Handle saving the search if requested
-    if request.method == 'GET' and 'save_action' in request.GET:
-        if request.user.profile.is_recruiter:
-            # Create a dictionary of search parameters
-            search_params = {
-                'search_input': request.GET.get('search_input', ''),
-                'skills': request.GET.get('skills', ''),
-                'location': request.GET.get('location', ''),
-                'projects': request.GET.get('projects', ''),
-            }
-
-            if not any(search_params.values()):
-                messages.warning(request, "Cannot save an empty search. Please enter at least one filter.")
-            else:
-                # Check if a similar search already exists for the recruiter
-                existing_search = SavedCandidateSearch.objects.filter(
-                    recruiter=request.user.profile,
-                    search_input=search_params['search_input'],
-                    skills=search_params['skills'],
-                    location=search_params['location'],
-                    projects=search_params['projects']
-                ).first()
-
-                saved_url = reverse('candidates.saved_candidate_searches')
-
-                if not existing_search:
-                    SavedCandidateSearch.objects.create(
-                        recruiter=request.user.profile,
-                        search_input=search_params['search_input'],
-                        skills=search_params['skills'],
-                        location=search_params['location'],
-                        projects=search_params['projects']
-                    )
-                    messages.success(request, mark_safe(f'Candidate search saved successfully! View your <a href="{saved_url}">saved searches</a>.'))
-                else:
-                    messages.info(request, mark_safe(f'This search has already been saved. View your <a href="{saved_url}">saved searches</a>.'))
-        else:
-            messages.error(request, 'Access denied. Only recruiters can save searches.')
-            return redirect('home.index')
-
     return render(request, 'candidates/candidate_search.html', {'template_data': template_data})
+
+@login_required
+def saved_candidate_searches(request):
+    if not request.user.profile.is_recruiter:
+        messages.error(request, 'Access denied.')
+        return redirect('home.index')
+
+    saved_searches = SavedCandidateSearch.objects.filter(
+        recruiter=request.user.profile
+    ).order_by('-created_at')
+
+    # Update all searches with new matches
+    update_saved_searches_with_new_matches(request.user.profile)
+
+    template_data = {
+        'title': 'Saved Candidate Searches',
+        'saved_searches': saved_searches,
+    }
+    return render(request, 'candidates/saved_candidate_searches.html', {'template_data': template_data})
 
 @login_required
 def delete_saved_search(request, search_id):
@@ -121,18 +100,3 @@ def delete_saved_search(request, search_id):
         messages.error(request, 'Invalid request method.')
     
     return redirect('candidates.saved_candidate_searches')
-
-@login_required
-def saved_candidate_searches(request):
-    """Display a list of saved candidate searches for recruiters"""
-    if not request.user.profile.is_recruiter:
-        messages.error(request, 'Access denied.')
-        return redirect('home.index')
-
-    saved_searches = SavedCandidateSearch.objects.filter(recruiter=request.user.profile).order_by('-created_at')
-
-    template_data = {
-        'title': 'Saved Candidate Searches',
-        'saved_searches': saved_searches,
-    }
-    return render(request, 'candidates/saved_candidate_searches.html', {'template_data': template_data})
