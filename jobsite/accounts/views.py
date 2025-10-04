@@ -4,13 +4,14 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+
+from accounts.utils import format_phone_number
 from .forms import (
     CustomUserCreationForm, CustomErrorList, JobSeekerSignupForm, 
     RecruiterSignupForm, JobSeekerProfileForm, RecruiterProfileForm,
-    EducationForm, WorkExperienceForm, PrivacySettingsForm, CandidateSearchForm
+    EducationForm, WorkExperienceForm, PrivacySettingsForm
 )
-from .models import UserProfile, JobSeekerProfile, Education, WorkExperience
-from django.db.models import Q
+from .models import UserProfile, Education, WorkExperience
 
 @login_required
 def logout(request):
@@ -107,8 +108,15 @@ def profile(request, username):
 
         if user_profile.is_job_seeker:
             template_data['job_seeker_profile'] = user_profile.job_seeker_profile
+
+            if template_data['job_seeker_profile'].phone:
+                template_data['job_seeker_profile'].phone = format_phone_number(template_data['job_seeker_profile'].phone)
+
         elif user_profile.is_recruiter:
             template_data['recruiter_profile'] = user_profile.recruiter_profile
+
+            if template_data['recruiter_profile'].phone:
+                template_data['recruiter_profile'].phone = format_phone_number(template_data['recruiter_profile'].phone)
             
     except UserProfile.DoesNotExist:
         messages.error(request, 'Profile not found. Please contact support.')
@@ -262,39 +270,6 @@ def delete_experience(request, experience_id):
         
     template_data = {'title': 'Confirm Delete Work Experience', 'experience': experience}
     return render(request, 'accounts/confirm_delete_experience.html', {'template_data': template_data})
-
-@login_required
-def candidate_search(request):
-    """Recruiter candidate search by skills, location, and projects"""
-    if not request.user.profile.is_recruiter:
-        messages.error(request, 'Access denied.')
-        return redirect('home.index')
-
-    form = CandidateSearchForm(request.GET or None)
-    results = JobSeekerProfile.objects.filter(profile_visibility='public')
-
-    if form.is_valid():
-        skills_list = form.cleaned_skills_list()
-        if skills_list:
-            for skill in skills_list:
-                results = results.filter(skills__icontains=skill)
-
-        location = form.cleaned_data.get('location')
-        if location:
-            results = results.filter(location__icontains=location)
-
-        projects = form.cleaned_data.get('projects')
-        if projects:
-            project_query = Q(summary__icontains=projects) | Q(work_experience__description__icontains=projects)
-            results = results.filter(project_query).distinct()
-
-    template_data = {
-        'title': 'Find Talent',
-        'form': form,
-        'results': results.select_related('user_profile__user')[:50],
-    }
-
-    return render(request, 'accounts/candidate_search.html', {'template_data': template_data})
 
 @login_required
 def privacy_settings(request):

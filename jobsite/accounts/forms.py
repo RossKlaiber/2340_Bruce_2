@@ -86,7 +86,7 @@ class JobSeekerProfileForm(forms.ModelForm):
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Tell recruiters about yourself, your experience, and what you\'re looking for...'}),
             'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Python, Django, JavaScript, React, etc.'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., San Francisco, CA or Remote'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+1 (555) 123-4567'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+12223334444', 'pattern': r'^\+?1?\d{9,15}$',}),
             'linkedin_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://linkedin.com/in/yourprofile'}),
             'github_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://github.com/yourusername'}),
             'portfolio_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://yourportfolio.com'}),
@@ -114,7 +114,7 @@ class RecruiterProfileForm(forms.ModelForm):
             'company_size': forms.TextInput(attrs={'class': 'form-control'}),
             'industry': forms.TextInput(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'pattern': r'^\+?1?\d{9,15}$',}),
             'linkedin_url': forms.URLInput(attrs={'class': 'form-control'}),
         }
 
@@ -161,22 +161,3 @@ class PrivacySettingsForm(forms.ModelForm):
             'show_experience': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'show_resume': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
-class CandidateSearchForm(forms.Form):
-    skills = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Python, React'}),
-        help_text='Comma-separated skills'
-    )
-    location = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City, State or Remote'})
-    )
-    projects = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Keywords in summary or experience'})
-    )
-
-    def cleaned_skills_list(self):
-        raw = self.cleaned_data.get('skills') or ''
-        return [s.strip() for s in raw.split(',') if s.strip()]

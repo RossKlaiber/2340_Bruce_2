@@ -7,7 +7,6 @@ urlpatterns = [
     path('signup/recruiter/', views.recruiter_signup, name='accounts.recruiter_signup'),
     path('login/', views.login, name='accounts.login'),
     path('logout/', views.logout, name='accounts.logout'),
-    path('candidates/search/', views.candidate_search, name='accounts.candidate_search'),
     path('profile/edit/', views.edit_profile, name='accounts.edit_profile'),
     path('profile/privacy/', views.privacy_settings, name='accounts.privacy_settings'),
     path('profile/add-education/', views.add_education, name='accounts.add_education'),
