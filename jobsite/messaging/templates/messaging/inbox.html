@@ -55,17 +55,3 @@
     </div>
 </div>
 {% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.location.hash) {
-            var triggerEl = document.querySelector('a[href="' + window.location.hash + '"]');
-            if (triggerEl) {
-                var tab = new bootstrap.Tab(triggerEl);
-                tab.show();
-            }
-        }
-    });
-</script>
-{% endblock %}

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.http import JsonResponse
 from .models import Message
 from .forms import MessageForm
 
@@ -118,3 +119,13 @@ def view_message(request, message_id):
         'reply_form': reply_form,
         'initial_recipient': initial_recipient,
     })
+
+@login_required
+def search_users(request):
+    query = request.GET.get('term', '')
+
+    users_filter = Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query)
+    users = User.objects.filter(users_filter).exclude(id=request.user.id).values('id', 'username', 'first_name', 'last_name')
+    
+    results = [{'id': user['id'], 'label': f"{user['first_name']} {user['last_name']} ({user['username']})", 'value': user['username']} for user in users]
+    return JsonResponse(results, safe=False)
