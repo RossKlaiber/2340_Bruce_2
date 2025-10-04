@@ -4,6 +4,8 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+
+from accounts.utils import format_phone_number
 from .forms import (
     CustomUserCreationForm, CustomErrorList, JobSeekerSignupForm, 
     RecruiterSignupForm, JobSeekerProfileForm, RecruiterProfileForm,
@@ -106,8 +108,15 @@ def profile(request, username):
 
         if user_profile.is_job_seeker:
             template_data['job_seeker_profile'] = user_profile.job_seeker_profile
+
+            if template_data['job_seeker_profile'].phone:
+                template_data['job_seeker_profile'].phone = format_phone_number(template_data['job_seeker_profile'].phone)
+
         elif user_profile.is_recruiter:
             template_data['recruiter_profile'] = user_profile.recruiter_profile
+
+            if template_data['recruiter_profile'].phone:
+                template_data['recruiter_profile'].phone = format_phone_number(template_data['recruiter_profile'].phone)
             
     except UserProfile.DoesNotExist:
         messages.error(request, 'Profile not found. Please contact support.')
