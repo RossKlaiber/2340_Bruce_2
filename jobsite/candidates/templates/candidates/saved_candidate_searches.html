@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Saved Candidate Searches</h2>
+        <a href="{% url 'candidates.candidate_search' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Search
+        </a>
+    </div>
+
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+
+    {% if template_data.saved_searches %}
+    <div class="list-group">
+        {% for search in template_data.saved_searches %}
+        <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 shadow-sm rounded p-3">
+            <div class="d-flex w-100 justify-content-between">
+                <h4 class="mb-1">{{ search.search_input|default:"[Empty Search]" }}</h4>
+                <small class="text-muted">Saved: {{ search.created_at|date:"M d, Y" }}</small>
+            </div>
+            <p class="mb-1 text-secondary">
+                {% if search.skills %}<span class="fw-semibold">Skills:</span> {{ search.skills }} | {% endif %}
+                {% if search.projects %}<span class="fw-semibold">Projects:</span> {{ search.projects }} | {% endif %}
+                {% if search.location %}<span class="fw-semibold">Location:</span> {{ search.location }}{% endif %}
+            </p>
+            <div class="d-flex justify-content-end mt-2 gap-2">
+                <a href="{% url 'candidates.candidate_search' %}?search_input={{ search.search_input }}&projects={{ search.projects }}&location={{ search.location }}&skills={{ search.skills }}"
+                    class="btn btn-sm btn-primary">
+                    <i class="fas fa-search"></i> View Matches
+                </a>
+                <form action="{% url 'candidates.delete_saved_search' search.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Are you sure you want to delete this saved search?');">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        You haven't saved any candidate searches yet. Start a new search to save your criteria!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

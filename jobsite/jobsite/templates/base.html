@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
 
-  <body>
+  <body class="d-flex flex-column min-vh-100">
     <!-- Header -->
     <nav class="p-3 navbar navbar-dark bg-dark navbar-expand-lg">
       <div class="container">
@@ -28,7 +28,7 @@
             {% if user.is_authenticated %}
               {% if user.profile.is_recruiter %}
                 <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
-                <a class="nav-link" href="{% url 'accounts.candidate_search' %}">Find Talent</a>
+                <a class="nav-link" href="{% url 'candidates.candidate_search' %}">Find Talent</a>
               {% elif user.profile.is_job_seeker %}
                 <a class="nav-link" href="{% url 'jobs.my_applications' %}">My Applications</a>
               {% endif %}
@@ -46,7 +46,7 @@
     </nav>
     <!-- Header -->
 
-    <div>
+    <div class="flex-grow-1">
       {% block content %}
       {% endblock content %}
     </div>

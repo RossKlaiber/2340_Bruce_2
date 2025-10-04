@@ -161,22 +161,3 @@ class PrivacySettingsForm(forms.ModelForm):
             'show_experience': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'show_resume': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
-class CandidateSearchForm(forms.Form):
-    skills = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Python, React'}),
-        help_text='Comma-separated skills'
-    )
-    location = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City, State or Remote'})
-    )
-    projects = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Keywords in summary or experience'})
-    )
-
-    def cleaned_skills_list(self):
-        raw = self.cleaned_data.get('skills') or ''
-        return [s.strip() for s in raw.split(',') if s.strip()]

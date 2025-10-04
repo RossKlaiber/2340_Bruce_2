@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from jobs.recommendations import get_recommended_jobs
 from .models import Job, Application
-from .forms import JobForm, ApplicationForm, JobSearchForm
+from .forms import JobForm, JobSearchForm
 
 def job_list(request):
     """Display a list of all active jobs with enhanced search and filtering"""
