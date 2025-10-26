@@ -6,7 +6,6 @@ from django.db import models
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
-from django.conf import settings
 
 from jobs.recommendations import get_recommended_jobs
 from .models import Job, Application
@@ -120,10 +119,7 @@ def job_list(request):
         'recommended': recommended,
     }
     
-    return render(request, 'jobs/job_list.html', {
-        'template_data': template_data,
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
-    })
+    return render(request, 'jobs/job_list.html', {'template_data': template_data})
 
 def job_detail(request, job_id):
     """Display details of a specific job"""
@@ -144,10 +140,7 @@ def job_detail(request, job_id):
         'has_applied': has_applied,
     }
     
-    return render(request, 'jobs/job_detail.html', {
-        'template_data': template_data,
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
-    })
+    return render(request, 'jobs/job_detail.html', {'template_data': template_data})
 
 @login_required
 def create_job(request):
@@ -177,10 +170,7 @@ def create_job(request):
         form = JobForm()
     
     template_data['form'] = form
-    return render(request, 'jobs/create_job.html', {
-        'template_data': template_data,
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
-    })
+    return render(request, 'jobs/create_job.html', {'template_data': template_data})
 
 @login_required
 def my_jobs(request):
@@ -237,10 +227,7 @@ def edit_job(request, job_id):
     
     template_data['form'] = form
     template_data['job'] = job
-    return render(request, 'jobs/edit_job.html', {
-        'template_data': template_data,
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
-    })
+    return render(request, 'jobs/edit_job.html', {'template_data': template_data})
 
 
 @login_required

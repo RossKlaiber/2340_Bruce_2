@@ -27,10 +27,6 @@ class Job(models.Model):
     title = models.CharField(max_length=200)
     company = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
-    latitude = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True, 
-                                 help_text="Latitude coordinate for map display")
-    longitude = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True, 
-                                  help_text="Longitude coordinate for map display")
     job_type = models.CharField(max_length=20, choices=JOB_TYPES, default='full-time')
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVELS, default='entry')
     work_type = models.CharField(max_length=20, choices=WORK_TYPES, default='onsite')
@@ -70,11 +66,6 @@ class Job(models.Model):
         if self.skills:
             return [skill.strip() for skill in self.skills.split(',') if skill.strip()]
         return []
-    
-    @property
-    def has_coordinates(self):
-        """Check if the job has valid latitude and longitude coordinates"""
-        return self.latitude is not None and self.longitude is not None
 
 
 class Application(models.Model):
