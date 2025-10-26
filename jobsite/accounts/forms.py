@@ -80,7 +80,7 @@ class RecruiterSignupForm(UserCreationForm):
 class JobSeekerProfileForm(forms.ModelForm):
     class Meta:
         model = JobSeekerProfile
-        fields = ['headline', 'summary', 'skills', 'location', 'phone', 'linkedin_url', 'github_url', 'portfolio_url', 'resume_file', 'is_available']
+        fields = ['headline', 'summary', 'skills', 'location', 'phone', 'linkedin_url', 'github_url', 'portfolio_url', 'resume_file', 'is_available', 'commute_radius']
         widgets = {
             'headline': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Senior Python Developer'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Tell recruiters about yourself, your experience, and what you\'re looking for...'}),
@@ -92,6 +92,7 @@ class JobSeekerProfileForm(forms.ModelForm):
             'portfolio_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://yourportfolio.com'}),
             'resume_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
             'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'commute_radius': forms.Select(attrs={'class': 'form-control'}),
         }
     
     def clean_resume_file(self):

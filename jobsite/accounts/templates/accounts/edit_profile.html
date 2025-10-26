@@ -49,14 +49,21 @@
                 </div>
 
                 <div class="row">
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <div class="mb-3">
                       <label for="{{ template_data.form.phone.id_for_label }}" class="form-label">Phone Number</label>
                       {{ template_data.form.phone }}
                   <div class="form-text">Do not include spaces, dashes, or parentheses.</div>
                     </div>
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label for="{{ template_data.form.commute_radius.id_for_label }}" class="form-label">Preferred Commute Radius</label>
+                      {{ template_data.form.commute_radius }}
+                      <div class="form-text">Maximum distance you're willing to commute for a job</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
                     <div class="mb-3">
                       <div class="form-check mt-4">
                         {{ template_data.form.is_available }}

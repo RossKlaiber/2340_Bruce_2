@@ -37,6 +37,20 @@ class JobSeekerProfile(models.Model):
     resume_file = models.FileField(upload_to='resumes/', blank=True, null=True)
     is_available = models.BooleanField(default=True, help_text="Are you currently looking for opportunities?")
     
+    # Commute Preferences
+    commute_radius = models.PositiveIntegerField(
+        default=25, 
+        help_text="Preferred maximum commute distance in miles",
+        choices=[
+            (5, '5 miles'),
+            (10, '10 miles'),
+            (15, '15 miles'),
+            (25, '25 miles'),
+            (50, '50 miles'),
+            (100, '100 miles'),
+        ]
+    )
+    
     # Privacy Settings
     show_contact_info = models.BooleanField(default=True, help_text="Allow recruiters to see your contact information")
     show_social_links = models.BooleanField(default=True, help_text="Allow recruiters to see your social media links")

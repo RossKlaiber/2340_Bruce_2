@@ -26,6 +26,7 @@
           </div>
           <div class="card-body">
             <form method="GET" id="jobSearchForm">
+              <input type="hidden" id="active-view-input" name="view" value="">
               <!-- First Row: Main Search and Location -->
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
@@ -58,22 +59,36 @@
                 </div>
               </div>
 
-              <!-- Third Row: Work Type, Salary Range, and Visa -->
+              <!-- Third Row: Work Type, Salary Range, Distance, and Visa -->
               <div class="row g-3 mb-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="{{ template_data.search_form.work_type.id_for_label }}" class="form-label">Work
                     Type</label>
                   {{ template_data.search_form.work_type }}
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="{{ template_data.search_form.salary_min.id_for_label }}" class="form-label">Min
                     Salary</label>
                   {{ template_data.search_form.salary_min }}
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="{{ template_data.search_form.salary_max.id_for_label }}" class="form-label">Max
                     Salary</label>
                   {{ template_data.search_form.salary_max }}
+                </div>
+                <div class="col-md-3">
+                  <label for="{{ template_data.search_form.distance_radius.id_for_label }}" class="form-label">Distance from Me</label>
+                  {{ template_data.search_form.distance_radius }}
+                  <div class="form-text">
+                    <small id="distance-status" class="text-muted">
+                      <i class="fas fa-info-circle"></i> Enable location to use distance filter
+                    </small>
+                    {% if template_data.using_commute_preference %}
+                      <div class="text-success mt-1">
+                        <i class="fas fa-check-circle"></i> Using your preferred {{ template_data.user_commute_preference }} mile commute radius
+                      </div>
+                    {% endif %}
+                  </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-check mt-md-4 pt-md-3">
@@ -84,6 +99,10 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Hidden User Location Fields -->
+              {{ template_data.search_form.user_latitude }}
+              {{ template_data.search_form.user_longitude }}
 
               <!-- Action Buttons -->
               <div class="row g-3">
@@ -150,7 +169,11 @@
                 <div class="row d-flex flex-column flex-grow-1 my-1">
                   <div class="col-md-12 flex-grow-1">
                     <p class="card-text">
-                      <i class="fas fa-map-marker-alt"></i> {{ job.location }} |
+                      <i class="fas fa-map-marker-alt"></i> {{ job.location }}
+                      {% if job.distance_from_user %}
+                        <span class="badge bg-primary ms-1">{{ job.distance_from_user }} mi away</span>
+                      {% endif %}
+                      |
                       <i class="fas fa-briefcase"></i> {{ job.get_job_type_display }} |
                       <i class="fas fa-user-tie"></i> {{ job.get_experience_level_display }} |
                       <i class="fas fa-home"></i> {{ job.get_work_type_display }}
@@ -286,9 +309,30 @@
                       <div class="row">
                         <div class="col-md-6">
                           <p><strong>Your Location:</strong> <span id="user-location-display"></span></p>
+                          <p><strong>Jobs Found:</strong> <span id="jobs-count">0</span></p>
                         </div>
                         <div class="col-md-6">
-                          <p><strong>Jobs Found:</strong> <span id="jobs-count"></span></p>
+                          <div id="distance-legend" style="display: none;">
+                            <p><strong>Distance Legend:</strong></p>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                              <span class="badge bg-success">
+                                <i class="fas fa-circle" style="color: green;"></i> ≤ 10 mi
+                              </span>
+                              <span class="badge bg-warning">
+                                <i class="fas fa-circle" style="color: orange;"></i> 11-25 mi
+                              </span>
+                              <span class="badge bg-info">
+                                <i class="fas fa-circle" style="color: yellow;"></i> 26-50 mi
+                              </span>
+                              <span class="badge bg-danger">
+                                <i class="fas fa-circle" style="color: red;"></i> > 50 mi
+                              </span>
+                            </div>
+                            <div id="legend-commute-container" class="text-muted small" style="display: none;">
+                              <i class="fas fa-circle" style="color: #007bff;"></i>
+                              Blue circle shows your <span id="legend-commute-radius">—</span> commute radius
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -506,6 +550,11 @@ let userLocationMarker;
 let jobMarkers = [];
 let userLocation = null;
 let geocoder;
+let commuteRadiusCircle = null; // Circle to show commute radius
+let currentRadiusMiles = null; // Currently active radius miles (from dropdown or preference)
+
+// User's commute preference from Django template
+const userCommutePreference = {% if template_data.user_commute_preference %}{{ template_data.user_commute_preference }}{% else %}null{% endif %};
 
 // Job data from Django template
 // eslint-disable-next-line
@@ -523,6 +572,7 @@ const jobsData = [
       experienceLevel: "{{ job.get_experience_level_display|escapejs }}",
       workType: "{{ job.get_work_type_display|escapejs }}",
       salaryRange: "{{ job.salary_range|escapejs }}",
+      distanceFromUser: {% if job.distance_from_user %}{{ job.distance_from_user }}{% else %}null{% endif %},
       url: "{% url 'jobs.detail' job.id %}"
     }{% if not forloop.last %},{% endif %}
     {% endif %}
@@ -547,7 +597,7 @@ function initJobsMap() {
   // Show map and info
   document.getElementById('jobs-map').style.display = 'block';
   document.getElementById('map-info').style.display = 'block';
-  document.getElementById('jobs-count').textContent = jobsData.length;
+  updateJobsCount(jobMarkers.length);
 }
 
 function addJobMarkers() {
@@ -556,22 +606,47 @@ function addJobMarkers() {
   jobMarkers = [];
   
   jobsData.forEach(job => {
+    // Determine marker color based on distance
+    let markerIcon = 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+    let titleText = `${job.title} at ${job.company}`;
+    
+    if (job.distanceFromUser !== null && job.distanceFromUser !== undefined) {
+      titleText += ` (${job.distanceFromUser} mi away)`;
+      
+      // Color code markers by distance
+      if (job.distanceFromUser <= 10) {
+        markerIcon = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+      } else if (job.distanceFromUser <= 25) {
+        markerIcon = 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
+      } else if (job.distanceFromUser <= 50) {
+        markerIcon = 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png';
+      } else {
+        markerIcon = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+      }
+    }
+    
     const marker = new google.maps.Marker({
       position: { lat: job.latitude, lng: job.longitude },
       map: jobsMap,
-      title: `${job.title} at ${job.company}`,
+      title: titleText,
       icon: {
-        url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+        url: markerIcon
       }
     });
     
-    // Create info window content
+    // Create info window content with distance info
+    let distanceHtml = '';
+    if (job.distanceFromUser !== null && job.distanceFromUser !== undefined) {
+      distanceHtml = `<p style="margin: 5px 0; color: #28a745;"><i class="fas fa-route"></i> ${job.distanceFromUser} miles away</p>`;
+    }
+    
     const infoWindow = new google.maps.InfoWindow({
       content: `
         <div style="padding: 10px; max-width: 300px;">
           <h6><strong>${job.title}</strong></h6>
           <p style="margin: 5px 0; color: #666;"><strong>${job.company}</strong></p>
           <p style="margin: 5px 0;"><i class="fas fa-map-marker-alt"></i> ${job.location}</p>
+          ${distanceHtml}
           <p style="margin: 5px 0;"><i class="fas fa-briefcase"></i> ${job.jobType}</p>
           <p style="margin: 5px 0;"><i class="fas fa-user-tie"></i> ${job.experienceLevel}</p>
           <p style="margin: 5px 0;"><i class="fas fa-home"></i> ${job.workType}</p>
@@ -649,6 +724,13 @@ function enableCurrentLocation() {
       
       // Calculate and display distances
       calculateDistances();
+      
+      // Update form fields for distance filtering
+      updateLocationInForm(lat, lng);
+
+  // Apply selected radius to map markers & circle
+  applyRadiusToMarkers();
+  drawCommuteRadiusCircle(lat, lng);
       
       // Reset button
       enableBtn.innerHTML = originalText;
@@ -731,6 +813,13 @@ function setManualLocation() {
       // Calculate and display distances
       calculateDistances();
       
+      // Update form fields for distance filtering
+      updateLocationInForm(userLocation.lat(), userLocation.lng());
+
+  // Apply selected radius to map markers & circle
+  applyRadiusToMarkers();
+  drawCommuteRadiusCircle(userLocation.lat(), userLocation.lng());
+      
     } else {
       alert('Location not found. Please try a different address.');
     }
@@ -799,8 +888,321 @@ function calculateDistances() {
   });
 }
 
+// Helper functions for distance filtering
+function updateLocationInForm(lat, lng) {
+  // Update hidden form fields with user location
+  const latInput = document.getElementById('user-latitude-input');
+  const lngInput = document.getElementById('user-longitude-input');
+  const distanceStatus = document.getElementById('distance-status');
+  
+  if (latInput && lngInput) {
+    latInput.value = lat;
+    lngInput.value = lng;
+    
+    // Update status message
+    if (distanceStatus) {
+      distanceStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i> Location enabled - distance filter available';
+    }
+    
+    // Enable distance filter dropdown
+    const distanceSelect = document.getElementById('id_distance_radius');
+    if (distanceSelect) {
+      distanceSelect.disabled = false;
+      
+      // Auto-set to user's commute preference if not already set and they have a preference
+      if (!distanceSelect.value && userCommutePreference) {
+        distanceSelect.value = userCommutePreference;
+      }
+  // Track currently selected radius
+  currentRadiusMiles = getSelectedRadiusMiles();
+  // Update legend with current radius
+  if (currentRadiusMiles) updateLegendRadius(currentRadiusMiles);
+    }
+    
+    // Show distance legend on map
+    const distanceLegend = document.getElementById('distance-legend');
+    if (distanceLegend) {
+      distanceLegend.style.display = 'block';
+    }
+    
+    // Draw commute radius circle
+    drawCommuteRadiusCircle(lat, lng);
+
+  // Hide prompts if we have coordinates (prevents prompt reappearing after reload)
+  const prompt = document.getElementById('location-prompt');
+  const manual = document.getElementById('manual-location-input');
+  if (prompt) prompt.style.display = 'none';
+  if (manual) manual.style.display = 'none';
+  }
+}
+
+function getSelectedRadiusMiles() {
+  const distanceSelect = document.getElementById('id_distance_radius');
+  const selected = distanceSelect && distanceSelect.value ? parseFloat(distanceSelect.value) : null;
+  return selected || (userCommutePreference ? parseFloat(userCommutePreference) : null);
+}
+
+function updateLegendRadius(miles) {
+  const cont = document.getElementById('legend-commute-container');
+  const span = document.getElementById('legend-commute-radius');
+  if (!cont || !span) return;
+  if (miles) {
+    cont.style.display = 'block';
+    span.textContent = `${miles} mile${parseFloat(miles) === 1 ? '' : 's'}`;
+  } else {
+    cont.style.display = 'none';
+    span.textContent = '—';
+  }
+}
+
+function drawCommuteRadiusCircle(lat, lng) {
+  if (!jobsMap) return;
+  // Determine radius to use
+  const radiusMiles = getSelectedRadiusMiles();
+  currentRadiusMiles = radiusMiles;
+  
+  // If no radius selected, clear any existing circle and return
+  if (!radiusMiles) {
+    if (commuteRadiusCircle) {
+      commuteRadiusCircle.setMap(null);
+      commuteRadiusCircle = null;
+    }
+    return;
+  }
+  
+  // Remove existing circle
+  if (commuteRadiusCircle) {
+    commuteRadiusCircle.setMap(null);
+  }
+  
+  // Create new circle showing commute radius
+  commuteRadiusCircle = new google.maps.Circle({
+    strokeColor: '#007bff',
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillColor: '#007bff',
+    fillOpacity: 0.1,
+    map: jobsMap,
+    center: { lat: parseFloat(lat), lng: parseFloat(lng) },
+  radius: radiusMiles * 1609.34, // Convert miles to meters
+  editable: true,
+  draggable: true,
+  clickable: true,
+  zIndex: 1000
+  });
+  // mark as initializing to ignore programmatic radius events
+  commuteRadiusCircle.__initializing = true;
+  // Show legend value for this radius
+  updateLegendRadius(radiusMiles);
+
+  // When user resizes the circle, update dropdown value and markers
+  google.maps.event.addListener(commuteRadiusCircle, 'radius_changed', function () {
+    if (commuteRadiusCircle && commuteRadiusCircle.__initializing) return;
+    const meters = commuteRadiusCircle.getRadius();
+    const milesRaw = meters / 1609.34;
+    const miles = nearestRadiusChoice(milesRaw);
+    currentRadiusMiles = miles;
+    // Sync dropdown (so server-side filtering respects new radius on submit)
+    const distanceSelect = document.getElementById('id_distance_radius');
+    if (distanceSelect) distanceSelect.value = String(miles);
+  updateLegendRadius(miles);
+    // Re-apply marker visibility with current center
+  const c = commuteRadiusCircle.getCenter();
+  applyRadiusToMarkersWithCenter(c.lat(), c.lng());
+  });
+
+  // When user drags the circle, move user location and re-apply filtering
+  google.maps.event.addListener(commuteRadiusCircle, 'center_changed', function () {
+    const c = commuteRadiusCircle.getCenter();
+    userLocation = c; // keep as a LatLng
+    if (userLocationMarker) {
+      userLocationMarker.setPosition(c);
+    }
+    const latInput = document.getElementById('user-latitude-input');
+    const lngInput = document.getElementById('user-longitude-input');
+    if (latInput && lngInput) {
+  latInput.value = c.lat();
+  lngInput.value = c.lng();
+    }
+    applyRadiusToMarkersWithCenter(c.lat(), c.lng());
+  });
+
+  // Submit after the user completes dragging the circle (not during)
+  google.maps.event.addListener(commuteRadiusCircle, 'dragend', function () {
+    const c = commuteRadiusCircle.getCenter();
+    const latInput = document.getElementById('user-latitude-input');
+    const lngInput = document.getElementById('user-longitude-input');
+    if (latInput && lngInput) {
+      latInput.value = Number(c.lat()).toFixed(6);
+      lngInput.value = Number(c.lng()).toFixed(6);
+    }
+  });
+
+  // Temporarily disable map panning while interacting with the circle for smoother dragging
+  google.maps.event.addListener(commuteRadiusCircle, 'dragstart', function () {
+    jobsMap.setOptions({ draggable: false });
+  });
+  google.maps.event.addListener(commuteRadiusCircle, 'dragend', function () {
+    jobsMap.setOptions({ draggable: true });
+  });
+  google.maps.event.addListener(commuteRadiusCircle, 'mousedown', function () {
+    jobsMap.setOptions({ draggable: false });
+  });
+  // Re-enable after short delay to catch mouseup outside circle
+  google.maps.event.addListener(commuteRadiusCircle, 'mouseup', function () {
+    setTimeout(() => jobsMap.setOptions({ draggable: true }), 50);
+  });
+
+  // allow events after initial draw
+  setTimeout(() => { if (commuteRadiusCircle) commuteRadiusCircle.__initializing = false; }, 0);
+}
+
+function enableDistanceFiltering() {
+  // Check if we have user location data
+  const latInput = document.getElementById('user-latitude-input');
+  const lngInput = document.getElementById('user-longitude-input');
+  
+  if (latInput && lngInput && latInput.value && lngInput.value) {
+    updateLocationInForm(latInput.value, lngInput.value);
+    const prompt = document.getElementById('location-prompt');
+    const manual = document.getElementById('manual-location-input');
+    if (prompt) prompt.style.display = 'none';
+    if (manual) manual.style.display = 'none';
+    // Ensure map is initialized if user had coords on load
+    const mapTab = document.getElementById('map-tab');
+    if (mapTab && !document.getElementById('jobs-map').style.display) {
+      // no-op safe; map will init on first show
+    }
+  }
+}
+
+// Compute straight-line distance in miles (Haversine)
+function milesBetween(lat1, lon1, lat2, lon2) {
+  const toRad = d => (d * Math.PI) / 180;
+  const R = 3959; // miles
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.asin(Math.sqrt(a));
+  return R * c;
+}
+
+function applyRadiusToMarkers() {
+  if (!userLocation || !jobMarkers.length) return;
+  const radiusMiles = getSelectedRadiusMiles();
+  // If no radius, show all markers
+  if (!radiusMiles) {
+    jobMarkers.forEach(marker => marker.setVisible(true));
+  updateJobsCount(jobMarkers.length);
+    return;
+  }
+  const uLat = typeof userLocation.lat === 'function' ? userLocation.lat() : userLocation.lat;
+  const uLng = typeof userLocation.lng === 'function' ? userLocation.lng() : userLocation.lng;
+  let visibleCount = 0;
+  jobMarkers.forEach((marker, idx) => {
+    const job = jobsData[idx];
+    const dist = milesBetween(uLat, uLng, job.latitude, job.longitude);
+    marker.distanceMiles = dist;
+    const visible = dist <= radiusMiles;
+    marker.setVisible(visible);
+    if (visible) visibleCount += 1;
+    // Optionally adjust color by distance
+    let markerIcon = 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+    if (dist <= 10) markerIcon = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+    else if (dist <= 25) markerIcon = 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
+    else if (dist <= 50) markerIcon = 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png';
+    else markerIcon = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+    marker.setIcon({ url: markerIcon });
+  });
+  updateJobsCount(visibleCount);
+}
+
+// Apply visibility using an explicit center point
+function applyRadiusToMarkersWithCenter(lat, lng) {
+  if (!jobMarkers.length) return;
+  const radiusMiles = getSelectedRadiusMiles();
+  if (!radiusMiles) {
+    jobMarkers.forEach(marker => marker.setVisible(true));
+  updateJobsCount(jobMarkers.length);
+    return;
+  }
+  let visibleCount = 0;
+  jobMarkers.forEach((marker, idx) => {
+    const job = jobsData[idx];
+    const dist = milesBetween(lat, lng, job.latitude, job.longitude);
+    marker.distanceMiles = dist;
+    const visible = dist <= radiusMiles;
+    marker.setVisible(visible);
+    if (visible) visibleCount += 1;
+  });
+  updateJobsCount(visibleCount);
+}
+
+// Choose the nearest allowed radius step (5,10,25,50,100)
+function nearestRadiusChoice(miles) {
+  const choices = [5, 10, 25, 50, 100];
+  let best = choices[0];
+  let bestDiff = Math.abs(miles - best);
+  for (let i = 1; i < choices.length; i++) {
+    const d = Math.abs(miles - choices[i]);
+    if (d < bestDiff) {
+      best = choices[i];
+      bestDiff = d;
+    }
+  }
+  return best;
+}
+
+// Update the map Jobs Found display consistently
+function updateJobsCount(count) {
+  const el = document.getElementById('jobs-count');
+  if (el) el.textContent = String(count);
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize distance filtering on page load
+  enableDistanceFiltering();
+
+  // Activate tab based on view param (persist active tab across reloads)
+  const params = new URLSearchParams(window.location.search);
+  const initialView = params.get('view');
+  if (initialView === 'map') {
+    const mapTab = document.getElementById('map-tab');
+    if (mapTab) mapTab.click();
+  } else if (initialView === 'list') {
+    const listTab = document.getElementById('list-tab');
+    if (listTab) listTab.click();
+  }
+  
+  // Distance filter change event
+  const distanceSelect = document.getElementById('id_distance_radius');
+  if (distanceSelect) {
+    distanceSelect.addEventListener('change', function() {
+      const latInput = document.getElementById('user-latitude-input');
+      const lngInput = document.getElementById('user-longitude-input');
+      
+      if (this.value && (!latInput.value || !lngInput.value)) {
+        alert('Please enable location access first to use distance filtering.');
+        this.value = '';
+        
+        // Show map tab and prompt for location
+        const mapTab = document.getElementById('map-tab');
+        if (mapTab) {
+          mapTab.click();
+        }
+      } else if (latInput.value && lngInput.value) {
+        // Update current radius and re-draw circle + markers live
+        currentRadiusMiles = getSelectedRadiusMiles();
+        drawCommuteRadiusCircle(parseFloat(latInput.value), parseFloat(lngInput.value));
+        applyRadiusToMarkers();
+  updateLegendRadius(currentRadiusMiles);
+  // No auto-submit; list updates on manual form submit
+      }
+    });
+  }
   // Enable current location button
   document.getElementById('enable-location-btn').addEventListener('click', enableCurrentLocation);
   
@@ -823,6 +1225,43 @@ document.addEventListener('DOMContentLoaded', function() {
       initJobsMap();
     }
   });
+
+  // Removed auto-submit on tab switch; list updates on manual submit
+
+  // On form submit, sync circle radius and center to form fields so backend filtering matches the map
+  const jobSearchForm = document.getElementById('jobSearchForm');
+  if (jobSearchForm) {
+    jobSearchForm.addEventListener('submit', function() {
+      const distanceSelect = document.getElementById('id_distance_radius');
+      const latInput = document.getElementById('user-latitude-input');
+      const lngInput = document.getElementById('user-longitude-input');
+      if (commuteRadiusCircle) {
+        const meters = commuteRadiusCircle.getRadius();
+        const miles = nearestRadiusChoice(meters / 1609.34);
+        if (distanceSelect) {
+          distanceSelect.disabled = false; // ensure it posts
+          // Only override if user hasn't explicitly chosen a dropdown value
+          if (!distanceSelect.value) {
+            distanceSelect.value = String(miles);
+          }
+        }
+        const c = commuteRadiusCircle.getCenter();
+        if (latInput && lngInput && c) {
+          latInput.value = c.lat();
+          lngInput.value = c.lng();
+        }
+      }
+      // Ensure active view is preserved (default to current visible tab)
+      const activeViewInput = document.getElementById('active-view-input');
+      const mapPane = document.getElementById('map-view');
+      if (activeViewInput && mapPane) {
+        const isMapActive = mapPane.classList.contains('active');
+        activeViewInput.value = isMapActive ? 'map' : 'list';
+      }
+    });
+  }
 });
+
+// No auto-submit helpers; all updates are manual via the Search button
 </script>
 {% endblock content %}
