@@ -32,19 +32,23 @@
         <div id="boardView">
           <div class="row g-2">
             {% for group in template_data.status_groups %}
-            <div class="col mb-3">
+            <div class="col mb-3 kanban-column" data-status="{{ group.code }}">
               <div class="card h-100">
                 <div class="card-header bg-{{ group.color }} text-white">
                   <h6 class="card-title mb-0">
                     {{ group.name }}
-                    <span class="badge bg-light text-dark ms-2">{{ group.count }}</span>
+                    <span class="badge bg-light text-dark ms-2 status-count" data-status="{{ group.code }}">{{ group.count }}</span>
                   </h6>
                 </div>
-                <div class="card-body p-2">
+                <div class="card-body p-2 kanban-drop-zone" data-status="{{ group.code }}" style="min-height: 200px;">
                   {% for application in group.applications %}
-                  <div class="card mb-2 shadow-sm application-card" data-status="{{ application.status }}">
+                  <div class="card mb-2 shadow-sm application-card" 
+                       draggable="true"
+                       data-application-id="{{ application.id }}"
+                       data-status="{{ application.status }}">
                     <div class="card-body p-2">
                       <h6 class="card-title mb-1 text-truncate">
+                        <i class="fas fa-grip-vertical text-muted me-1" style="cursor: move;"></i>
                         <a href="{% url 'jobs.detail' application.job.id %}" class="text-decoration-none">
                           {{ application.job.title }}
                         </a>
@@ -59,7 +63,7 @@
                     </div>
                   </div>
                   {% empty %}
-                  <div class="text-center text-muted py-3">
+                  <div class="text-center text-muted py-3 empty-message">
                     <i class="fas fa-inbox"></i>
                     <br>
                     <small>No applications</small>
@@ -173,13 +177,300 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedView === 'list') {
         listViewBtn.click();
     }
+    
+    // Drag and Drop for Board View
+    const cards = document.querySelectorAll('.application-card[draggable="true"]');
+    const dropZones = document.querySelectorAll('.kanban-drop-zone');
+    
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        
+        // Touch events for mobile
+        card.addEventListener('touchstart', handleTouchStart, { passive: false });
+        card.addEventListener('touchmove', handleTouchMove, { passive: false });
+        card.addEventListener('touchend', handleTouchEnd, { passive: false });
+    });
+    
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('drop', handleDrop);
+        zone.addEventListener('dragleave', handleDragLeave);
+    });
+    
+    let draggedElement = null;
+    let touchClone = null;
+    let touchStartTime = 0;
+    let touchHoldTimer = null;
+    let isDraggingTouch = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    // Touch event handlers for mobile
+    function handleTouchStart(e) {
+        touchStartTime = Date.now();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        
+        // Long press to start drag (500ms)
+        touchHoldTimer = setTimeout(() => {
+            isDraggingTouch = true;
+            draggedElement = this;
+            this.classList.add('dragging');
+            
+            // Create a clone for visual feedback
+            touchClone = this.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.zIndex = '10000';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.width = this.offsetWidth + 'px';
+            touchClone.style.transform = 'rotate(3deg)';
+            document.body.appendChild(touchClone);
+            
+            updateTouchClonePosition(e.touches[0].clientX, e.touches[0].clientY);
+            
+            // Haptic feedback if available
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }, 500);
+    }
+    
+    function handleTouchMove(e) {
+        if (!isDraggingTouch) {
+            // Cancel long press if finger moves too much before drag starts
+            const moveX = Math.abs(e.touches[0].clientX - touchStartX);
+            const moveY = Math.abs(e.touches[0].clientY - touchStartY);
+            if (moveX > 10 || moveY > 10) {
+                clearTimeout(touchHoldTimer);
+            }
+            return;
+        }
+        
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        updateTouchClonePosition(touch.clientX, touch.clientY);
+        
+        // Find which drop zone the touch is over
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropZone = elementBelow?.closest('.kanban-drop-zone');
+        
+        // Update visual feedback
+        dropZones.forEach(zone => zone.classList.remove('drag-over'));
+        if (dropZone) {
+            dropZone.classList.add('drag-over');
+        }
+    }
+    
+    function handleTouchEnd(e) {
+        clearTimeout(touchHoldTimer);
+        
+        if (!isDraggingTouch) return;
+        
+        e.preventDefault();
+        
+        const touch = e.changedTouches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropZone = elementBelow?.closest('.kanban-drop-zone');
+        
+        // Clean up
+        if (touchClone) {
+            touchClone.remove();
+            touchClone = null;
+        }
+        
+        draggedElement.classList.remove('dragging');
+        dropZones.forEach(zone => zone.classList.remove('drag-over'));
+        
+        if (dropZone && draggedElement) {
+            const newStatus = dropZone.dataset.status;
+            const oldStatus = draggedElement.dataset.status;
+            
+            if (newStatus !== oldStatus) {
+                const applicationId = draggedElement.dataset.applicationId;
+                
+                // Move card to new column
+                dropZone.insertBefore(draggedElement, dropZone.querySelector('.empty-message'));
+                draggedElement.dataset.status = newStatus;
+                
+                // Hide empty messages
+                dropZone.querySelector('.empty-message')?.remove();
+                
+                // Update status on server
+                updateApplicationStatus(applicationId, newStatus);
+                
+                // Haptic feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate([50, 100, 50]);
+                }
+            }
+        }
+        
+        isDraggingTouch = false;
+        draggedElement = null;
+    }
+    
+    function updateTouchClonePosition(x, y) {
+        if (touchClone) {
+            touchClone.style.left = (x - touchClone.offsetWidth / 2) + 'px';
+            touchClone.style.top = (y - touchClone.offsetHeight / 2) + 'px';
+        }
+    }
+    
+    // Mouse drag handlers
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+    
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        dropZones.forEach(zone => zone.classList.remove('drag-over'));
+    }
+    
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('drag-over');
+        return false;
+    }
+    
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        this.classList.remove('drag-over');
+        
+        if (draggedElement) {
+            const newStatus = this.dataset.status;
+            const oldStatus = draggedElement.dataset.status;
+            
+            if (newStatus !== oldStatus) {
+                const applicationId = draggedElement.dataset.applicationId;
+                
+                // Move card to new column
+                this.insertBefore(draggedElement, this.querySelector('.empty-message'));
+                draggedElement.dataset.status = newStatus;
+                
+                // Hide empty messages
+                this.querySelector('.empty-message')?.remove();
+                
+                // Update status on server
+                updateApplicationStatus(applicationId, newStatus);
+            }
+        }
+        
+        return false;
+    }
 });
+
+function updateApplicationStatus(applicationId, status) {
+    const formData = new FormData();
+    formData.append('status', status);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/jobs/applications/${applicationId}/update-status/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status counts
+            updateStatusCounts();
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                <strong>Success!</strong> Application moved to ${data.new_status}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => alertDiv.remove(), 3000);
+            
+            // Update list view badge if exists
+            const listCards = document.querySelectorAll('#listView .application-card');
+            listCards.forEach(card => {
+                if (card.querySelector(`[data-application-id="${applicationId}"]`) || 
+                    card.dataset.applicationId === applicationId) {
+                    const badge = card.querySelector('.badge');
+                    if (badge) {
+                        badge.className = `badge bg-${data.status_color} ms-2`;
+                        badge.textContent = data.new_status;
+                    }
+                }
+            });
+        } else {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                <strong>Error!</strong> ${data.error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => alertDiv.remove(), 3000);
+            
+            // Revert the move
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert the move
+        location.reload();
+    });
+}
+
+function updateStatusCounts() {
+    document.querySelectorAll('.kanban-drop-zone').forEach(zone => {
+        const status = zone.dataset.status;
+        const count = zone.querySelectorAll('.application-card').length;
+        const badge = document.querySelector(`.status-count[data-status="${status}"]`);
+        if (badge) {
+            badge.textContent = count;
+        }
+        
+        // Show/hide empty message
+        const emptyMessage = zone.querySelector('.empty-message');
+        if (count === 0 && !emptyMessage) {
+            zone.innerHTML = `
+                <div class="text-center text-muted py-3 empty-message">
+                    <i class="fas fa-inbox"></i>
+                    <br>
+                    <small>No applications</small>
+                </div>
+            `;
+        }
+    });
+}
 </script>
 
 <style>
 .application-card {
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
+    transition: transform 0.2s ease-in-out, opacity 0.2s;
+    cursor: move;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .application-card:hover {
@@ -187,8 +478,21 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
 }
 
+.application-card.dragging {
+    opacity: 0.5;
+}
+
 .card-header {
     border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.kanban-drop-zone {
+    transition: background-color 0.2s;
+}
+
+.kanban-drop-zone.drag-over {
+    background-color: #e3f2fd !important;
+    border: 2px dashed #2196F3;
 }
 
 /* Kanban board styling */
@@ -218,6 +522,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     #boardView .row {
         flex-direction: column;
+    }
+    
+    /* Better touch targets on mobile */
+    .application-card {
+        cursor: grab;
+    }
+    
+    .application-card.dragging {
+        cursor: grabbing;
     }
 }
 

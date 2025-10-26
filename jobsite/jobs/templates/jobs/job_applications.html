@@ -2,14 +2,16 @@
 {% block content %}
 {% csrf_token %}
 <div class="p-3 mt-4">
-  <div class="container">
+  <div class="container-fluid">
     <div class="row">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2>{{ template_data.title }}</h2>
-          <a href="{% url 'jobs.detail' template_data.job.id %}" class="btn btn-outline-primary">
-            <i class="fas fa-eye"></i> View Job
-          </a>
+          <div>
+            <a href="{% url 'jobs.detail' template_data.job.id %}" class="btn btn-outline-primary">
+              <i class="fas fa-eye"></i> View Job
+            </a>
+          </div>
         </div>
         
         <!-- Job Summary Card -->
@@ -39,98 +41,214 @@
         
         <!-- Applications -->
         {% if template_data.applications %}
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4>Applications ({{ template_data.applications.count }})</h4>
-            <small class="text-muted">Most recent first</small>
+          <!-- View Toggle -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h4 class="mb-0">Applications ({{ template_data.total_applications }})</h4>
+            </div>
+            <div>
+              <!-- View Toggle -->
+              <div class="btn-group" role="group" aria-label="View toggle">
+                <button type="button" class="btn btn-primary" id="kanbanViewBtn">
+                  <i class="fas fa-columns"></i> Kanban
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="listViewBtn">
+                  <i class="fas fa-list"></i> List
+                </button>
+              </div>
+            </div>
           </div>
-          
-          {% for application in template_data.applications %}
-          <div class="card mb-3">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-8">
-                  <h6 class="card-title">
-                    <a href="{% url 'accounts.profile' application.applicant.username %}" class="text-black">{{ application.applicant.get_full_name|default:application.applicant.username }}</a>
-                    <span class="badge bg-{{ application.get_status_color }} ms-2">
-                      {{ application.get_status_display }}
-                    </span>
-                  </h6>
-                  <p class="text-muted small mb-2">
-                    <i class="fas fa-envelope"></i> {{ application.applicant.email }}
-                    {% if application.applicant.profile.job_seeker_profile.phone %}
-                      | <i class="fas fa-phone"></i> {{ application.applicant.profile.job_seeker_profile.phone }}
-                    {% endif %}
-                  </p>
-                  
-                  <h6>Cover Note:</h6>
-                  <p class="card-text">{{ application.cover_note|linebreaks }}</p>
-                  
-                  {% if application.applicant.profile.job_seeker_profile %}
-                    {% with profile=application.applicant.profile.job_seeker_profile %}
-                      {% if profile.headline %}
-                        <p class="text-muted"><strong>Headline:</strong> {{ profile.headline }}</p>
-                      {% endif %}
-                      {% if profile.linkedin_url or profile.github_url or profile.portfolio_url %}
-                        <div class="mb-2">
-                          <small class="text-muted">Links:</small>
-                          {% if profile.linkedin_url %}
-                            <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
-                              <i class="fab fa-linkedin"></i> LinkedIn
-                            </a>
-                          {% endif %}
-                          {% if profile.github_url %}
-                            <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark me-1">
-                              <i class="fab fa-github"></i> GitHub
-                            </a>
-                          {% endif %}
-                          {% if profile.portfolio_url %}
-                            <a href="{{ profile.portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-info me-1">
-                              <i class="fas fa-globe"></i> Portfolio
-                            </a>
-                          {% endif %}
+
+          <!-- Kanban Board View -->
+          <div id="kanbanView">
+            <div class="row g-2">
+              {% for group in template_data.status_groups %}
+              <div class="col kanban-column" data-status="{{ group.code }}">
+                <div class="card h-100">
+                  <div class="card-header bg-{{ group.color }} text-white">
+                    <h6 class="card-title mb-0">
+                      {{ group.name }}
+                      <span class="badge bg-light text-dark ms-2 status-count" data-status="{{ group.code }}">{{ group.count }}</span>
+                    </h6>
+                  </div>
+                  <div class="card-body p-2 kanban-drop-zone" data-status="{{ group.code }}" style="min-height: 200px;">
+                    {% for application in group.applications %}
+                    <div class="card mb-2 shadow-sm applicant-card" 
+                         draggable="true"
+                         data-application-id="{{ application.id }}"
+                         data-status="{{ application.status }}">
+                      <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                          <h6 class="card-title mb-1 flex-grow-1" style="font-size: 0.9rem;">
+                            <i class="fas fa-grip-vertical text-muted me-1" style="cursor: move;"></i>
+                            {{ application.applicant.get_full_name|default:application.applicant.username }}
+                          </h6>
+                          <button class="btn btn-sm btn-link p-0 text-muted expand-card" data-application-id="{{ application.id }}" title="Expand details">
+                            <i class="fas fa-chevron-down"></i>
+                          </button>
                         </div>
-                      {% endif %}
-                    {% endwith %}
-                  {% endif %}
+                        
+                        <p class="card-text small text-muted mb-1">
+                          <i class="fas fa-envelope"></i> {{ application.applicant.email }}
+                        </p>
+                        
+                        {% if application.applicant.profile.job_seeker_profile.headline %}
+                        <p class="card-text small text-primary mb-1">
+                          <i class="fas fa-briefcase"></i> {{ application.applicant.profile.job_seeker_profile.headline|truncatewords:8 }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="cover-note-preview">
+                          <p class="card-text small text-muted mb-1">
+                            <strong>Note:</strong> {{ application.cover_note|truncatewords:10 }}
+                          </p>
+                        </div>
+                        
+                        <!-- Expanded Details (hidden by default) -->
+                        <div class="expanded-details" id="details-{{ application.id }}" style="display: none;">
+                          <hr class="my-2">
+                          
+                          {% if application.applicant.profile.job_seeker_profile.phone %}
+                          <p class="card-text small text-muted mb-1">
+                            <i class="fas fa-phone"></i> {{ application.applicant.profile.job_seeker_profile.phone }}
+                          </p>
+                          {% endif %}
+                          
+                          <p class="card-text small mb-2">
+                            <strong>Full Note:</strong><br>
+                            {{ application.cover_note|linebreaks }}
+                          </p>
+                          
+                          {% if application.applicant.profile.job_seeker_profile.linkedin_url or application.applicant.profile.job_seeker_profile.github_url or application.applicant.profile.job_seeker_profile.portfolio_url %}
+                          <div class="mb-2">
+                            {% if application.applicant.profile.job_seeker_profile.linkedin_url %}
+                            <a href="{{ application.applicant.profile.job_seeker_profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1 mb-1">
+                              <i class="fab fa-linkedin"></i>
+                            </a>
+                            {% endif %}
+                            {% if application.applicant.profile.job_seeker_profile.github_url %}
+                            <a href="{{ application.applicant.profile.job_seeker_profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark me-1 mb-1">
+                              <i class="fab fa-github"></i>
+                            </a>
+                            {% endif %}
+                            {% if application.applicant.profile.job_seeker_profile.portfolio_url %}
+                            <a href="{{ application.applicant.profile.job_seeker_profile.portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-info me-1 mb-1">
+                              <i class="fas fa-globe"></i>
+                            </a>
+                            {% endif %}
+                          </div>
+                          {% endif %}
+                          
+                          <small class="text-muted d-block">
+                            Applied {{ application.applied_at|timesince }} ago
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3 empty-message">
+                      <i class="fas fa-inbox"></i>
+                      <br>
+                      <small>No applications</small>
+                    </div>
+                    {% endfor %}
+                  </div>
                 </div>
-                <div class="col-md-4 text-end">
-                  <small class="text-muted">
-                    Applied {{ application.applied_at|timesince }} ago
-                  </small>
-                  <div class="mt-3">
-                    <div class="btn-group-vertical d-grid gap-1" role="group">
-                      <button class="btn btn-sm btn-outline-secondary status-btn" 
-                              onclick="updateApplicationStatus('{{ application.id }}', 'applied')"
-                              {% if application.status == 'applied' %}disabled{% endif %}>
-                        <i class="fas fa-paper-plane"></i> Applied
-                      </button>
-                      <button class="btn btn-sm btn-outline-warning status-btn" 
-                              onclick="updateApplicationStatus('{{ application.id }}', 'review')"
-                              {% if application.status == 'review' %}disabled{% endif %}>
-                        <i class="fas fa-eye"></i> Under Review
-                      </button>
-                      <button class="btn btn-sm btn-outline-info status-btn" 
-                              onclick="updateApplicationStatus('{{ application.id }}', 'interview')"
-                              {% if application.status == 'interview' %}disabled{% endif %}>
-                        <i class="fas fa-users"></i> Interview
-                      </button>
-                      <button class="btn btn-sm btn-outline-success status-btn" 
-                              onclick="updateApplicationStatus('{{ application.id }}', 'offer')"
-                              {% if application.status == 'offer' %}disabled{% endif %}>
-                        <i class="fas fa-handshake"></i> Offer Extended
-                      </button>
-                      <button class="btn btn-sm btn-outline-dark status-btn" 
-                              onclick="updateApplicationStatus('{{ application.id }}', 'closed')"
-                              {% if application.status == 'closed' %}disabled{% endif %}>
-                        <i class="fas fa-times"></i> Closed
-                      </button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- List View -->
+          <div id="listView" style="display: none;">
+          {% for application in template_data.applications %}
+            <div class="card mb-3 shadow-sm">
+              <div class="card-body">
+                <div class="row align-items-start">
+                  <div class="col-md-8">
+                    <h5 class="card-title">
+                      {{ application.applicant.get_full_name|default:application.applicant.username }}
+                      <span class="badge bg-{{ application.get_status_color }} ms-2">{{ application.get_status_display }}</span>
+                    </h5>
+                    
+                    <p class="card-text text-muted mb-2">
+                      <i class="fas fa-envelope"></i> {{ application.applicant.email }}
+                      {% if application.applicant.profile.job_seeker_profile.phone %}
+                        | <i class="fas fa-phone"></i> {{ application.applicant.profile.job_seeker_profile.phone }}
+                      {% endif %}
+                    </p>
+                    
+                    {% if application.applicant.profile.job_seeker_profile.headline %}
+                      <p class="text-muted"><strong>Headline:</strong> {{ application.applicant.profile.job_seeker_profile.headline }}</p>
+                    {% endif %}
+                    
+                    <h6>Cover Note:</h6>
+                    <p class="card-text">{{ application.cover_note|linebreaks }}</p>
+                    
+                    {% if application.applicant.profile.job_seeker_profile %}
+                      {% with profile=application.applicant.profile.job_seeker_profile %}
+                        {% if profile.linkedin_url or profile.github_url or profile.portfolio_url %}
+                          <div class="mb-2">
+                            <small class="text-muted">Links:</small>
+                            {% if profile.linkedin_url %}
+                              <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fab fa-linkedin"></i> LinkedIn
+                              </a>
+                            {% endif %}
+                            {% if profile.github_url %}
+                              <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark me-1">
+                                <i class="fab fa-github"></i> GitHub
+                              </a>
+                            {% endif %}
+                            {% if profile.portfolio_url %}
+                              <a href="{{ profile.portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-info me-1">
+                                <i class="fas fa-globe"></i> Portfolio
+                              </a>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endwith %}
+                    {% endif %}
+                  </div>
+                  <div class="col-md-4 text-end">
+                    <small class="text-muted">
+                      Applied {{ application.applied_at|timesince }} ago
+                    </small>
+                    <div class="mt-3">
+                      <div class="btn-group-vertical d-grid gap-1" role="group">
+                        <button class="btn btn-sm btn-outline-secondary status-btn" 
+                                onclick="updateApplicationStatus('{{ application.id }}', 'applied')"
+                                {% if application.status == 'applied' %}disabled{% endif %}>
+                          <i class="fas fa-paper-plane"></i> Applied
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning status-btn" 
+                                onclick="updateApplicationStatus('{{ application.id }}', 'review')"
+                                {% if application.status == 'review' %}disabled{% endif %}>
+                          <i class="fas fa-eye"></i> Under Review
+                        </button>
+                        <button class="btn btn-sm btn-outline-info status-btn" 
+                                onclick="updateApplicationStatus('{{ application.id }}', 'interview')"
+                                {% if application.status == 'interview' %}disabled{% endif %}>
+                          <i class="fas fa-users"></i> Interview
+                        </button>
+                        <button class="btn btn-sm btn-outline-success status-btn" 
+                                onclick="updateApplicationStatus('{{ application.id }}', 'offer')"
+                                {% if application.status == 'offer' %}disabled{% endif %}>
+                          <i class="fas fa-handshake"></i> Offer Extended
+                        </button>
+                        <button class="btn btn-sm btn-outline-dark status-btn" 
+                                onclick="updateApplicationStatus('{{ application.id }}', 'closed')"
+                                {% if application.status == 'closed' %}disabled{% endif %}>
+                          <i class="fas fa-times"></i> Closed
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         {% else %}
         <div class="text-center py-5">
           <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
@@ -143,72 +261,424 @@
   </div>
 </div>
 
-<script>
-function updateApplicationStatus(applicationId, status) {
-    const formData = new FormData();
-    formData.append('status', status);
-    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+<style>
+  .kanban-column {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .kanban-drop-zone {
+    transition: background-color 0.2s;
+  }
+  
+  .kanban-drop-zone.drag-over {
+    background-color: #e3f2fd !important;
+    border: 2px dashed #2196F3;
+  }
+  
+  .applicant-card {
+    cursor: move;
+    transition: opacity 0.2s, transform 0.2s;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  .applicant-card.dragging {
+    opacity: 0.5;
+  }
+  
+  .applicant-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .expand-card {
+    transition: transform 0.2s;
+  }
+  
+  .expand-card.expanded {
+    transform: rotate(180deg);
+  }
+  
+  @media (max-width: 768px) {
+    .kanban-column {
+      min-width: 100%;
+      margin-bottom: 1rem;
+    }
     
-    fetch(`/jobs/applications/${applicationId}/update-status/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show success message
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-success alert-dismissible fade show';
-            alertDiv.innerHTML = `
-                <strong>Success!</strong> ${data.message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-            
-            // Update the badge
-            const badge = document.querySelector(`[onclick*="${applicationId}"]`).closest('.card').querySelector('.badge');
-            if (badge) {
-                badge.className = `badge bg-${data.status_color} ms-2`;
-                badge.textContent = data.new_status;
-            }
-            
-            // Update button states
-            const buttons = document.querySelectorAll(`[onclick*="${applicationId}"]`);
-            buttons.forEach(button => {
-                button.disabled = false;
-                button.classList.remove('btn-secondary', 'btn-warning', 'btn-info', 'btn-success', 'btn-dark');
-                button.classList.add('btn-outline-secondary', 'btn-outline-warning', 'btn-outline-info', 'btn-outline-success', 'btn-outline-dark');
-            });
-            
-            // Disable the current status button
-            const currentButton = document.querySelector(`[onclick*="${applicationId}"][onclick*="${status}"]`);
-            if (currentButton) {
-                currentButton.disabled = true;
-            }
-        } else {
-            // Show error message
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-            alertDiv.innerHTML = `
-                <strong>Error!</strong> ${data.error}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.innerHTML = `
-            <strong>Error!</strong> Something went wrong. Please try again.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    /* Better touch targets on mobile */
+    .applicant-card {
+      cursor: grab;
+    }
+    
+    .applicant-card.dragging {
+      cursor: grabbing;
+    }
+  }
+</style>
+
+<script>
+// View Toggle
+document.addEventListener('DOMContentLoaded', function() {
+  const kanbanViewBtn = document.getElementById('kanbanViewBtn');
+  const listViewBtn = document.getElementById('listViewBtn');
+  const kanbanView = document.getElementById('kanbanView');
+  const listView = document.getElementById('listView');
+  
+  // Load saved preference
+  const savedView = localStorage.getItem('recruiterApplicationsView') || 'kanban';
+  
+  function showView(viewType) {
+    if (viewType === 'kanban') {
+      kanbanView.style.display = 'block';
+      listView.style.display = 'none';
+      kanbanViewBtn.classList.add('btn-primary');
+      kanbanViewBtn.classList.remove('btn-outline-primary');
+      listViewBtn.classList.add('btn-outline-primary');
+      listViewBtn.classList.remove('btn-primary');
+    } else {
+      kanbanView.style.display = 'none';
+      listView.style.display = 'block';
+      listViewBtn.classList.add('btn-primary');
+      listViewBtn.classList.remove('btn-outline-primary');
+      kanbanViewBtn.classList.add('btn-outline-primary');
+      kanbanViewBtn.classList.remove('btn-primary');
+    }
+    localStorage.setItem('recruiterApplicationsView', viewType);
+  }
+  
+  showView(savedView);
+  
+  kanbanViewBtn.addEventListener('click', () => showView('kanban'));
+  listViewBtn.addEventListener('click', () => showView('list'));
+  
+  // Expand/Collapse Cards
+  document.querySelectorAll('.expand-card').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const appId = this.dataset.applicationId;
+      const details = document.getElementById(`details-${appId}`);
+      const icon = this.querySelector('i');
+      
+      if (details.style.display === 'none') {
+        details.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+        this.classList.add('expanded');
+      } else {
+        details.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+        this.classList.remove('expanded');
+      }
     });
+  });
+  
+    // Drag and Drop
+  const cards = document.querySelectorAll('.applicant-card');
+  const dropZones = document.querySelectorAll('.kanban-drop-zone');
+  
+  cards.forEach(card => {
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+    
+    // Touch events for mobile
+    card.addEventListener('touchstart', handleTouchStart, { passive: false });
+    card.addEventListener('touchmove', handleTouchMove, { passive: false });
+    card.addEventListener('touchend', handleTouchEnd, { passive: false });
+  });
+  
+  dropZones.forEach(zone => {
+    zone.addEventListener('dragover', handleDragOver);
+    zone.addEventListener('drop', handleDrop);
+    zone.addEventListener('dragleave', handleDragLeave);
+  });
+  
+  let draggedElement = null;
+  let touchClone = null;
+  let touchStartTime = 0;
+  let touchHoldTimer = null;
+  let isDraggingTouch = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  
+  // Touch event handlers for mobile
+  function handleTouchStart(e) {
+    touchStartTime = Date.now();
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    
+    // Long press to start drag (500ms)
+    touchHoldTimer = setTimeout(() => {
+      isDraggingTouch = true;
+      draggedElement = this;
+      this.classList.add('dragging');
+      
+      // Create a clone for visual feedback
+      touchClone = this.cloneNode(true);
+      touchClone.style.position = 'fixed';
+      touchClone.style.zIndex = '10000';
+      touchClone.style.opacity = '0.8';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.width = this.offsetWidth + 'px';
+      touchClone.style.transform = 'rotate(3deg)';
+      document.body.appendChild(touchClone);
+      
+      updateTouchClonePosition(e.touches[0].clientX, e.touches[0].clientY);
+      
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500);
+  }
+  
+  function handleTouchMove(e) {
+    if (!isDraggingTouch) {
+      // Cancel long press if finger moves too much before drag starts
+      const moveX = Math.abs(e.touches[0].clientX - touchStartX);
+      const moveY = Math.abs(e.touches[0].clientY - touchStartY);
+      if (moveX > 10 || moveY > 10) {
+        clearTimeout(touchHoldTimer);
+      }
+      return;
+    }
+    
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    updateTouchClonePosition(touch.clientX, touch.clientY);
+    
+    // Find which drop zone the touch is over
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.kanban-drop-zone');
+    
+    // Update visual feedback
+    dropZones.forEach(zone => zone.classList.remove('drag-over'));
+    if (dropZone) {
+      dropZone.classList.add('drag-over');
+    }
+  }
+  
+  function handleTouchEnd(e) {
+    clearTimeout(touchHoldTimer);
+    
+    if (!isDraggingTouch) return;
+    
+    e.preventDefault();
+    
+    const touch = e.changedTouches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.kanban-drop-zone');
+    
+    // Clean up
+    if (touchClone) {
+      touchClone.remove();
+      touchClone = null;
+    }
+    
+    draggedElement.classList.remove('dragging');
+    dropZones.forEach(zone => zone.classList.remove('drag-over'));
+    
+    if (dropZone && draggedElement) {
+      const newStatus = dropZone.dataset.status;
+      const oldStatus = draggedElement.dataset.status;
+      
+      if (newStatus !== oldStatus) {
+        const applicationId = draggedElement.dataset.applicationId;
+        
+        // Move card to new column
+        dropZone.insertBefore(draggedElement, dropZone.querySelector('.empty-message'));
+        draggedElement.dataset.status = newStatus;
+        
+        // Hide empty messages
+        dropZone.querySelector('.empty-message')?.remove();
+        
+        // Update status on server
+        updateApplicationStatus(applicationId, newStatus);
+        
+        // Haptic feedback if available
+        if (navigator.vibrate) {
+          navigator.vibrate([50, 100, 50]);
+        }
+      }
+    }
+    
+    isDraggingTouch = false;
+    draggedElement = null;
+  }
+  
+  function updateTouchClonePosition(x, y) {
+    if (touchClone) {
+      touchClone.style.left = (x - touchClone.offsetWidth / 2) + 'px';
+      touchClone.style.top = (y - touchClone.offsetHeight / 2) + 'px';
+    }
+  }
+  
+  // Mouse drag handlers
+  function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+  }
+  
+  function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    dropZones.forEach(zone => zone.classList.remove('drag-over'));
+  }
+  
+  function handleDragOver(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('drag-over');
+    return false;
+  }
+  
+  function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+  
+  function handleDrop(e) {
+    if (e.stopPropagation) {
+      e.stopPropagation();
+    }
+    
+    this.classList.remove('drag-over');
+    
+    if (draggedElement) {
+      const newStatus = this.dataset.status;
+      const oldStatus = draggedElement.dataset.status;
+      
+      if (newStatus !== oldStatus) {
+        const applicationId = draggedElement.dataset.applicationId;
+        
+        // Move card to new column
+        this.insertBefore(draggedElement, this.querySelector('.empty-message'));
+        draggedElement.dataset.status = newStatus;
+        
+        // Hide empty messages
+        this.querySelector('.empty-message')?.remove();
+        
+        // Update status on server
+        updateApplicationStatus(applicationId, newStatus);
+      }
+    }
+    
+    return false;
+  }
+});
+
+function updateApplicationStatus(applicationId, status) {
+  const formData = new FormData();
+  formData.append('status', status);
+  formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  
+  fetch(`/jobs/applications/${applicationId}/update-status/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Update kanban view - move card to new column
+      const kanbanCard = document.querySelector(`#kanbanView .applicant-card[data-application-id="${applicationId}"]`);
+      if (kanbanCard) {
+        const newDropZone = document.querySelector(`#kanbanView .kanban-drop-zone[data-status="${status}"]`);
+        if (newDropZone) {
+          // Update card's data-status attribute
+          kanbanCard.dataset.status = status;
+          
+          // Move card to new column
+          const emptyMessage = newDropZone.querySelector('.empty-message');
+          if (emptyMessage) {
+            emptyMessage.remove();
+          }
+          newDropZone.insertBefore(kanbanCard, newDropZone.firstChild);
+        }
+      }
+      
+      // Update status counts
+      updateStatusCounts();
+      
+      // Show success message
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertDiv.style.zIndex = '9999';
+      alertDiv.innerHTML = `
+        <strong>Success!</strong> ${data.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      
+      setTimeout(() => alertDiv.remove(), 3000);
+      
+      // Update list view badge if exists
+      const listCards = document.querySelectorAll('#listView .card');
+      listCards.forEach(card => {
+        const button = card.querySelector(`[onclick*="${applicationId}"]`);
+        if (button) {
+          const badge = card.querySelector('.badge');
+          if (badge) {
+            badge.className = `badge bg-${data.status_color} ms-2`;
+            badge.textContent = data.new_status;
+          }
+          
+          // Update button states in list view
+          const buttons = card.querySelectorAll('.status-btn');
+          buttons.forEach(btn => {
+            btn.disabled = false;
+          });
+          const currentButton = card.querySelector(`[onclick*="${status}"]`);
+          if (currentButton) {
+            currentButton.disabled = true;
+          }
+        }
+      });
+    } else {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+      alertDiv.style.zIndex = '9999';
+      alertDiv.innerHTML = `
+        <strong>Error!</strong> ${data.error}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+
+function updateStatusCounts() {
+  document.querySelectorAll('.kanban-drop-zone').forEach(zone => {
+    const status = zone.dataset.status;
+    const count = zone.querySelectorAll('.applicant-card').length;
+    const badge = document.querySelector(`.status-count[data-status="${status}"]`);
+    if (badge) {
+      badge.textContent = count;
+    }
+    
+    // Show/hide empty message
+    const emptyMessage = zone.querySelector('.empty-message');
+    if (count === 0 && !emptyMessage) {
+      zone.innerHTML = `
+        <div class="text-center text-muted py-3 empty-message">
+          <i class="fas fa-inbox"></i>
+          <br>
+          <small>No applications</small>
+        </div>
+      `;
+    }
+  });
 }
 </script>
 {% endblock content %}

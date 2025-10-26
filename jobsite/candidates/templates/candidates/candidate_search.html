@@ -84,9 +84,88 @@
     <div class="row">
       <div class="col-12">
 
+        <!-- Recommended Candidates Section -->
+        {% if template_data.recommended_candidates and not template_data.is_searching %}
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-star"></i> Recommended Candidates for Your Jobs
+            </h5>
+            <small>Top matches based on your active job postings</small>
+          </div>
+          <div class="card-body p-4">
+            <div class="list-group list-group-flush">
+              {% for candidate, match_data in template_data.recommended_candidates %}
+              <div class="list-group-item py-4">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 class="mb-1">
+                      {{ candidate.user_profile.user.first_name }} {{ candidate.user_profile.user.last_name }}
+                    </h5>
+                    {% if candidate.headline %}
+                    <p class="mb-1 text-muted">{{ candidate.headline }}</p>
+                    {% endif %}
+                    {% if candidate.location %}
+                    <p class="mb-1"><i class="fas fa-map-marker-alt text-danger"></i> {{ candidate.location }}</p>
+                    {% endif %}
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success d-flex align-items-center" style="height: 38px; padding: 0.375rem 0.75rem; font-size: 1rem;">{{ match_data.percentage }}% Match</span>
+                    <a href="{% url 'accounts.profile' candidate.user_profile.user.username %}"
+                      class="btn btn-outline-success">
+                      View Profile
+                    </a>
+                  </div>
+                </div>
+                
+                <!-- Match Details -->
+                {% if match_data.details %}
+                    <div class="mt-2">
+                      <small class="text-muted">
+                        <i class="fas fa-check-circle text-success"></i>
+                        {{ match_data.details|join:", " }}
+                      </small>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Best Match Job -->
+                    {% if match_data.best_match_job %}
+                    <div class="mt-2">
+                      <small class="text-primary">
+                        <i class="fas fa-briefcase"></i>
+                        Best match for: <strong>{{ match_data.best_match_job.title }}</strong>
+                        ({{ match_data.best_match_score }}% match)
+                      </small>
+                    </div>
+                    {% endif %}
+                
+                {% if candidate.skills %}
+                <div class="mt-2">
+                  {% for s in candidate.skills_list %}
+                  <span class="badge bg-light text-dark border me-1">{{ s }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
 
+        <!-- Regular Search Results -->
         <div class="card border-0 shadow-sm">
           <div class="card-body p-4">
+            {% if template_data.is_searching %}
+              <h5 class="mb-3">
+                <i class="fas fa-search"></i> Search Results
+              </h5>
+            {% elif template_data.recommended_candidates %}
+              <h5 class="mb-3">
+                <i class="fas fa-users"></i> All Candidates
+              </h5>
+            {% endif %}
+            
             {% if template_data.results %}
             <div class="list-group list-group-flush">
               {% for js in template_data.results %}

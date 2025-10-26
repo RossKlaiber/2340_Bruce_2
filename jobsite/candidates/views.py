@@ -6,6 +6,7 @@ from django.contrib import messages
 from .forms import CandidateSearchForm
 from accounts.models import JobSeekerProfile
 from .models import SavedCandidateSearch
+from .recommendations import get_recommended_candidates_for_recruiter
 
 from .utils import (
     update_saved_searches_with_new_matches,
@@ -24,6 +25,15 @@ def candidate_search(request):
 
     form = CandidateSearchForm(request.GET or None)
     results = JobSeekerProfile.objects.filter(profile_visibility='public')
+    
+    # Get recommended candidates for this recruiter
+    recommended_candidates = []
+    is_searching = bool(request.GET and any(request.GET.get(field) for field in ['search_input', 'skills', 'location', 'projects']))
+    
+    if not is_searching:
+        # Only show recommendations when not actively searching
+        recommended_with_scores = get_recommended_candidates_for_recruiter(request.user.profile, limit=10)
+        recommended_candidates = [(candidate, match_data) for candidate, match_data in recommended_with_scores]
 
     if form.is_valid():
         search_input = form.cleaned_data.get('search_input')
@@ -61,6 +71,8 @@ def candidate_search(request):
         'title': 'Find Talent',
         'form': form,
         'results': results.select_related('user_profile__user')[:50],
+        'recommended_candidates': recommended_candidates,
+        'is_searching': is_searching,
     }
 
     return render(request, 'candidates/candidate_search.html', {'template_data': template_data})
