@@ -161,3 +161,14 @@ class PrivacySettingsForm(forms.ModelForm):
             'show_experience': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'show_resume': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class EmailCandidateForm(forms.Form):
+    subject = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email subject'})
+    )
+    message = forms.CharField(
+        required=True,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 8, 'placeholder': 'Enter your message to the candidate...'})
+    )
