@@ -5,7 +5,7 @@ class JobForm(forms.ModelForm):
     class Meta:
         model = Job
         fields = [
-            'title', 'company', 'location', 'job_type', 'experience_level',
+            'title', 'company', 'location', 'latitude', 'longitude', 'job_type', 'experience_level',
             'work_type', 'skills', 'salary_min', 'salary_max', 'visa_sponsorship',
             'description', 'requirements', 'benefits', 'application_deadline'
         ]
@@ -20,7 +20,18 @@ class JobForm(forms.ModelForm):
             }),
             'location': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., San Francisco, CA or Remote'
+                'placeholder': 'e.g., San Francisco, CA or Remote',
+                'id': 'location-input'
+            }),
+            'latitude': forms.NumberInput(attrs={
+                'class': 'form-control d-none',
+                'id': 'latitude-input',
+                'step': '0.00000001'
+            }),
+            'longitude': forms.NumberInput(attrs={
+                'class': 'form-control d-none',
+                'id': 'longitude-input',
+                'step': '0.00000001'
             }),
             'job_type': forms.Select(attrs={'class': 'form-control'}),
             'experience_level': forms.Select(attrs={'class': 'form-control'}),
@@ -69,6 +80,8 @@ class JobForm(forms.ModelForm):
         self.fields['benefits'].required = False
         self.fields['application_deadline'].required = False
         self.fields['skills'].required = False
+        self.fields['latitude'].required = False
+        self.fields['longitude'].required = False
         
         # Add help text
         self.fields['salary_min'].help_text = 'Minimum salary (optional)'
@@ -108,7 +121,8 @@ class JobSearchForm(forms.Form):
         max_length=200,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Search jobs, companies, locations, skills...'
+            'placeholder': 'Search jobs, companies, locations, skills...',
+            'id': 'search-input'
         })
     )
     
@@ -117,7 +131,8 @@ class JobSearchForm(forms.Form):
         max_length=200,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'e.g., San Francisco, CA'
+            'placeholder': 'e.g., San Francisco, CA',
+            'id': 'location-search-input'
         })
     )
     
