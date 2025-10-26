@@ -71,7 +71,7 @@ def job_seeker_signup(request):
             messages.success(request, 'Account created successfully! Welcome to JobSite!')
             # Auto-login the user after signup
             auth_login(request, user)
-            return redirect('home.dashboard/?new_user=true')
+            return redirect(reverse('home.dashboard') + '?new_user=true')
         else:
             template_data['form'] = form
     else:
@@ -90,7 +90,7 @@ def recruiter_signup(request):
             messages.success(request, 'Account created successfully! Welcome to JobSite!')
             # Auto-login the user after signup
             auth_login(request, user)
-            return redirect('home.dashboard/?new_user=true')
+            return redirect(reverse('home.dashboard') + '?new_user=true')
         else:
             template_data['form'] = form
     else:
