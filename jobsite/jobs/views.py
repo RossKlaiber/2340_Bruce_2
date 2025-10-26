@@ -277,12 +277,26 @@ def job_applications(request, job_id):
         return redirect('home.index')
     
     job = get_object_or_404(Job, id=job_id, posted_by=request.user)
-    applications = Application.objects.filter(job=job).select_related('applicant', 'applicant__profile')
+    applications = Application.objects.filter(job=job).select_related('applicant', 'applicant__profile', 'applicant__profile__job_seeker_profile')
+    
+    # Group applications by status for board layout (ordered)
+    status_groups = []
+    for status_code, status_name in Application.APPLICATION_STATUS:
+        status_applications = applications.filter(status=status_code)
+        status_groups.append({
+            'code': status_code,
+            'name': status_name,
+            'applications': status_applications,
+            'color': Application.STATUS_COLORS.get(status_code, 'secondary'),
+            'count': status_applications.count()
+        })
     
     template_data = {
         'title': f'Applications for {job.title}',
         'job': job,
         'applications': applications,
+        'status_groups': status_groups,
+        'total_applications': applications.count(),
     }
     
     return render(request, 'jobs/job_applications.html', {'template_data': template_data})
