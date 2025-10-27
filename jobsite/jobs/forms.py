@@ -189,3 +189,40 @@ class JobSearchForm(forms.Form):
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+    
+    # Distance filtering fields
+    distance_radius = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', 'Any Distance'),
+            ('5', 'Within 5 miles'),
+            ('10', 'Within 10 miles'),
+            ('25', 'Within 25 miles'),
+            ('50', 'Within 50 miles'),
+            ('100', 'Within 100 miles'),
+        ],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    # User location fields (hidden, populated by JavaScript)
+    user_latitude = forms.DecimalField(
+        required=False,
+        max_digits=10,
+        decimal_places=8,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control d-none',
+            'id': 'user-latitude-input',
+            'step': '0.00000001'
+        })
+    )
+    
+    user_longitude = forms.DecimalField(
+        required=False,
+        max_digits=11,
+        decimal_places=8,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control d-none',
+            'id': 'user-longitude-input',
+            'step': '0.00000001'
+        })
+    )

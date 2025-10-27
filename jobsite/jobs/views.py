@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from jobs.recommendations import get_recommended_jobs
+from jobs.utils import filter_jobs_by_distance, get_jobs_with_distances
 from .models import Job, Application
 from .forms import JobForm, JobSearchForm
 
@@ -18,9 +19,19 @@ def job_list(request):
     search_form = JobSearchForm(request.GET)
     recommended = request.GET.get("recommended") == "true"
     
-    # Start with all active jobs
+    # Get user location early for recommendations
+    user_lat = None
+    user_lon = None
+    if search_form.is_valid():
+        user_lat = search_form.cleaned_data.get('user_latitude')
+        user_lon = search_form.cleaned_data.get('user_longitude')
+    
+    # Start with all active jobs or recommendations
     if recommended:
-        jobs = get_recommended_jobs(request)
+        user_location = None
+        if user_lat and user_lon:
+            user_location = {'lat': user_lat, 'lng': user_lon}
+        jobs = get_recommended_jobs(request, user_location)
     else:
         jobs = Job.objects.filter(is_active=True)
     
@@ -93,10 +104,47 @@ def job_list(request):
         if visa_sponsorship:
             jobs = jobs.filter(visa_sponsorship=True)
     
-    # Pagination
-    paginator = Paginator(jobs, 10)  # Show 10 jobs per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Distance filtering (applied after other filters)
+    distance_radius = None
+    user_commute_preference = None
+    
+    # Check if user is authenticated and has a job seeker profile with commute preference
+    if request.user.is_authenticated:
+        try:
+            if request.user.profile.is_job_seeker:
+                user_commute_preference = request.user.profile.job_seeker_profile.commute_radius
+        except:
+            pass
+    
+    if search_form.is_valid():
+        distance_radius = search_form.cleaned_data.get('distance_radius')
+    
+    # Auto-apply user's commute preference if they have location but no distance filter set
+    if user_lat and user_lon and not distance_radius and user_commute_preference:
+        distance_radius = str(user_commute_preference)
+    
+    # Apply distance filter if user location and distance are provided
+    if user_lat and user_lon and distance_radius:
+        jobs = filter_jobs_by_distance(jobs, user_lat, user_lon, distance_radius)
+        # Since filter_jobs_by_distance returns a list, we need to handle pagination differently
+        paginator = Paginator(jobs, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    else:
+        # Normal pagination for QuerySet
+        paginator = Paginator(jobs, 10)  # Show 10 jobs per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Add distance info to jobs if user location is available (for map view)
+        if user_lat and user_lon:
+            jobs_with_distances = get_jobs_with_distances(jobs, user_lat, user_lon)
+            # Replace the page_obj jobs with ones that have distance info
+            for i, job in enumerate(page_obj):
+                for job_with_distance in jobs_with_distances:
+                    if job.id == job_with_distance.id:
+                        page_obj.object_list[i] = job_with_distance
+                        break
     
     # Add application status for job seekers
     if request.user.is_authenticated:
@@ -116,8 +164,13 @@ def job_list(request):
         'title': 'Recommended Jobs' if recommended else 'Job Listings',
         'page_obj': page_obj,
         'search_form': search_form,
-        'total_jobs': jobs.count(),
+    # Use paginator count to support both QuerySets and list-backed pagination
+    'total_jobs': page_obj.paginator.count,
         'recommended': recommended,
+        'has_distance_filter': bool(user_lat and user_lon and distance_radius),
+        'user_location': {'lat': user_lat, 'lng': user_lon} if user_lat and user_lon else None,
+        'user_commute_preference': user_commute_preference,
+        'using_commute_preference': bool(user_lat and user_lon and distance_radius and str(distance_radius) == str(user_commute_preference)),
     }
     
     return render(request, 'jobs/job_list.html', {

@@ -1,8 +1,13 @@
 from jobs.models import Job, Application
+from jobs.utils import filter_jobs_by_distance
 
-def get_recommended_jobs(request):
+def get_recommended_jobs(request, user_location=None):
     """
-    Recommends jobs to a job seeker based on their skills.
+    Recommends jobs to a job seeker based on their skills and optionally commute preferences.
+    
+    Args:
+        request: The HTTP request object
+        user_location: Dict with 'lat' and 'lng' keys for user's location (optional)
     """
     job_seeker_profile = getattr(request.user.profile, "job_seeker_profile", None)
 
@@ -28,5 +33,29 @@ def get_recommended_jobs(request):
         if seeker_skills.intersection(job_keywords):
             recommended_job_ids.append(job.id)
     
-    # Return queryset for compatibility with pagination/count/etc.
-    return Job.objects.filter(id__in=recommended_job_ids)
+    # Get the base recommended jobs
+    recommended_jobs = Job.objects.filter(id__in=recommended_job_ids)
+    
+    # Apply commute distance filter if user has location and commute preference
+    if (user_location and 
+        user_location.get('lat') and 
+        user_location.get('lng') and 
+        job_seeker_profile.commute_radius):
+        
+        try:
+            # Filter by user's preferred commute radius
+            recommended_jobs = filter_jobs_by_distance(
+                recommended_jobs, 
+                user_location['lat'], 
+                user_location['lng'], 
+                job_seeker_profile.commute_radius
+            )
+            # Convert back to QuerySet-like object for compatibility
+            if isinstance(recommended_jobs, list):
+                job_ids = [job.id for job in recommended_jobs]
+                recommended_jobs = Job.objects.filter(id__in=job_ids)
+        except Exception:
+            # If distance filtering fails, return original recommendations
+            pass
+    
+    return recommended_jobs
