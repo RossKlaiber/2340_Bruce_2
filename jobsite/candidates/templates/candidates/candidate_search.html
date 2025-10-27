@@ -1,4 +1,127 @@
 {% extends 'base.html' %}
+
+{% block extra_head %}
+  {% if template_data.location_clusters %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    #candidate-map {
+      height: 460px;
+      width: 100%;
+    }
+
+    .cluster-icon {
+      background: #198754;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      box-shadow: 0 6px 15px rgba(25, 135, 84, 0.35);
+    }
+
+    .cluster-icon span {
+      padding: 8px 12px;
+    }
+  </style>
+  {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+  {% if template_data.location_clusters %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggleButton = document.getElementById('toggle-map');
+      const mapWrapper = document.getElementById('map-wrapper');
+      const dataElement = document.getElementById('candidate-cluster-data');
+
+      if (!toggleButton || !mapWrapper || !dataElement) {
+        return;
+      }
+
+      const clusters = JSON.parse(dataElement.textContent);
+      let mapInstance = null;
+      let markers = [];
+
+      const renderMarkers = () => {
+        if (!mapInstance) {
+          mapInstance = L.map('candidate-map', { scrollWheelZoom: false });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(mapInstance);
+        }
+
+        markers.forEach(marker => marker.remove());
+        markers = [];
+
+        clusters.forEach(cluster => {
+          const marker = L.marker([cluster.latitude, cluster.longitude], {
+            icon: L.divIcon({
+              className: 'cluster-icon',
+              html: `<span>${cluster.count}</span>`,
+              iconSize: [44, 44],
+              iconAnchor: [22, 44]
+            })
+          });
+
+          let popup = `<div><h6 class="fw-bold mb-1">${cluster.location}</h6>`;
+          popup += `<p class="text-muted mb-2">${cluster.count} candidate${cluster.count === 1 ? '' : 's'}</p><ul class="list-unstyled mb-0">`;
+
+          cluster.candidates.slice(0, 5).forEach(candidate => {
+            popup += `<li class="mb-2"><a class="text-decoration-none" href="${candidate.profile_url}"><strong>${candidate.name}</strong></a>`;
+            if (candidate.headline) {
+              popup += `<div class="small text-muted">${candidate.headline}</div>`;
+            }
+            popup += `</li>`;
+          });
+
+          if (cluster.candidates.length > 5) {
+            popup += `<li class="small text-muted">+${cluster.candidates.length - 5} more</li>`;
+          }
+
+          popup += '</ul></div>';
+
+          marker.bindPopup(popup, { minWidth: 260 });
+          marker.addTo(mapInstance);
+          markers.push(marker);
+        });
+
+        if (markers.length) {
+          const group = L.featureGroup(markers);
+          mapInstance.fitBounds(group.getBounds().pad(0.25));
+        } else {
+          mapInstance.setView([20, 0], 2);
+        }
+      };
+
+      toggleButton.addEventListener('click', () => {
+        const isHidden = mapWrapper.classList.contains('d-none');
+
+        if (isHidden) {
+          mapWrapper.classList.remove('d-none');
+          toggleButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> Hide Map';
+          if (!mapInstance) {
+            renderMarkers();
+          } else {
+            setTimeout(() => {
+              mapInstance.invalidateSize();
+              if (markers.length) {
+                const group = L.featureGroup(markers);
+                mapInstance.fitBounds(group.getBounds().pad(0.25));
+              }
+            }, 200);
+          }
+        } else {
+          mapWrapper.classList.add('d-none');
+          toggleButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> Show Candidate Map';
+        }
+      });
+    });
+  </script>
+  {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="p-3 mt-4">
   <div class="container">
@@ -83,6 +206,24 @@
 
     <div class="row">
       <div class="col-12">
+
+        {% if template_data.location_clusters %}
+        {{ template_data.location_clusters|json_script:"candidate-cluster-data" }}
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0"><i class="fas fa-map-location-dot"></i> Candidate Map</h5>
+              <small class="text-muted">View clusters of applicants by their location</small>
+            </div>
+            <button id="toggle-map" type="button" class="btn btn-outline-success">
+              <i class="fas fa-map-marker-alt"></i> Show Candidate Map
+            </button>
+          </div>
+          <div id="map-wrapper" class="card-body p-0 d-none">
+            <div id="candidate-map"></div>
+          </div>
+        </div>
+        {% endif %}
 
         <!-- Recommended Candidates Section -->
         {% if template_data.recommended_candidates and not template_data.is_searching %}
