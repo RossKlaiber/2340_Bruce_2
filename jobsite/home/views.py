@@ -30,7 +30,16 @@ def dashboard(request):
     new_user = request.GET.get("new_user") == "true"
     
     if request.user.is_superuser:
-        return redirect('home.admin_dashboard')
+        has_valid_profile = False
+        if hasattr(request.user, 'profile'):
+            profile = request.user.profile
+            if profile.is_job_seeker and hasattr(profile, 'job_seeker_profile'):
+                has_valid_profile = True
+            elif profile.is_recruiter and hasattr(profile, 'recruiter_profile'):
+                has_valid_profile = True
+        
+        if not has_valid_profile:
+            return redirect('home.admin_dashboard')
     
     if request.user.profile.is_job_seeker:
         """Job seeker dashboard"""
