@@ -12,20 +12,16 @@
             <div class="row mb-4">
               <div class="col-md-6">
                 <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {{ template_data.job.location }}</p>
-                <p><i class="fas fa-briefcase"></i> <strong>Job Type:</strong> {{ template_data.job.get_job_type_display
-                  }}</p>
-                <p><i class="fas fa-user-tie"></i> <strong>Experience Level:</strong> {{
-                  template_data.job.get_experience_level_display }}</p>
+                <p><i class="fas fa-briefcase"></i> <strong>Job Type:</strong> {{ template_data.job.get_job_type_display }}</p>
+                <p><i class="fas fa-user-tie"></i> <strong>Experience Level:</strong> {{ template_data.job.get_experience_level_display }}</p>
                 <p><i class="fas fa-home"></i> <strong>Work Type:</strong> {{ template_data.job.get_work_type_display }}
                 </p>
               </div>
               <div class="col-md-6">
                 <p><i class="fas fa-dollar-sign"></i> <strong>Salary:</strong> {{ template_data.job.salary_range }}</p>
-                <p><i class="fas fa-calendar"></i> <strong>Posted:</strong> {{ template_data.job.created_at|date:"F d,
-                  Y" }}</p>
+                <p><i class="fas fa-calendar"></i> <strong>Posted:</strong> {{ template_data.job.created_at|date:"F d, Y" }}</p>
                 {% if template_data.job.application_deadline %}
-                <p><i class="fas fa-clock"></i> <strong>Deadline:</strong> {{
-                  template_data.job.application_deadline|date:"F d, Y" }}</p>
+                <p><i class="fas fa-clock"></i> <strong>Deadline:</strong> {{ template_data.job.application_deadline|date:"F d, Y" }}</p>
                 {% endif %}
                 {% if template_data.job.visa_sponsorship %}
                 <p><i class="fas fa-globe"></i> <strong>Visa Sponsorship:</strong> <span
@@ -111,8 +107,7 @@
         <div class="card mt-3">
           <div class="card-body">
             <h6>Posted by</h6>
-            <p class="mb-1"><strong>{{
-                template_data.job.posted_by.get_full_name|default:template_data.job.posted_by.username }}</strong></p>
+            <p class="mb-1"><strong>{{ template_data.job.posted_by.get_full_name|default:template_data.job.posted_by.username }}</strong></p>
             <p class="text-muted small">Member since {{ template_data.job.posted_by.date_joined|date:"F Y" }}</p>
 
             {% if user == template_data.job.posted_by %}
@@ -277,44 +272,44 @@
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
 <script>
   function initJobMap() {
-    const jobLat = {{ template_data.job.latitude }
-  };
-  const jobLng = {{ template_data.job.longitude }};
-  const jobLocation = { lat: jobLat, lng: jobLng };
+    const jobLat = {{ template_data.job.latitude }};
+    const jobLng = {{ template_data.job.longitude }};
+    const jobLocation = { lat: jobLat, lng: jobLng };
 
-  const map = new google.maps.Map(document.getElementById('job-map'), {
-    zoom: 15,
-    center: jobLocation,
-    mapTypeControl: true,
-    streetViewControl: true,
-    fullscreenControl: true
-  });
 
-  const marker = new google.maps.Marker({
-    position: jobLocation,
-    map: map,
-    title: '{{ template_data.job.company }} - {{ template_data.job.title }}',
-    animation: google.maps.Animation.DROP
-  });
+    const map = new google.maps.Map(document.getElementById('job-map'), {
+      zoom: 15,
+      center: jobLocation,
+      mapTypeControl: true,
+      streetViewControl: true,
+      fullscreenControl: true
+    });
 
-  // Add info window with job details
-  const infoWindow = new google.maps.InfoWindow({
-    content: `
-            <div style="padding: 10px;">
-                <h6><strong>{{ template_data.job.company }}</strong></h6>
-                <p style="margin: 5px 0;"><strong>{{ template_data.job.title }}</strong></p>
-                <p style="margin: 5px 0; color: #666;">{{ template_data.job.location }}</p>
-            </div>
-        `
-  });
+    const marker = new google.maps.Marker({
+      position: jobLocation,
+      map: map,
+      title: '{{ template_data.job.company }} - {{ template_data.job.title }}',
+      animation: google.maps.Animation.DROP
+    });
 
-  marker.addListener('click', function () {
+    // Add info window with job details
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+              <div>
+                  <h6><strong>{{ template_data.job.company }}</strong></h6>
+                  <p style="margin: 5px 0;"><strong>{{ template_data.job.title }}</strong></p>
+                  <p style="margin: 5px 0; color: #666;">{{ template_data.job.location }}</p>
+              </div>
+          `
+    });
+
+    marker.addListener('click', function () {
+      infoWindow.open(map, marker);
+    });
+
+    // Open info window by default
     infoWindow.open(map, marker);
-  });
-
-  // Open info window by default
-  infoWindow.open(map, marker);
-}
+  }
 
   // Initialize map when page loads
   google.maps.event.addDomListener(window, 'load', initJobMap);
