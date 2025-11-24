@@ -13,6 +13,7 @@ from .utils import (
     save_candidate_search,
     perform_candidate_search
 )
+from .location_utils import build_location_clusters
 
 @login_required
 def candidate_search(request):
@@ -67,12 +68,17 @@ def candidate_search(request):
     if request.method == 'GET' and 'save_action' in request.GET:
         save_candidate_search(request, request.user.profile)
 
+    results_qs = results.select_related('user_profile__user')
+    results_list = list(results_qs)
+    location_clusters = build_location_clusters(results_list)
+
     template_data = {
         'title': 'Find Talent',
         'form': form,
-        'results': results.select_related('user_profile__user')[:50],
+        'results': results_list[:50],
         'recommended_candidates': recommended_candidates,
         'is_searching': is_searching,
+        'location_clusters': location_clusters,
     }
 
     return render(request, 'candidates/candidate_search.html', {'template_data': template_data})

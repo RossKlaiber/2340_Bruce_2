@@ -4,12 +4,14 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 
 from accounts.utils import format_phone_number
 from .forms import (
     CustomUserCreationForm, CustomErrorList, JobSeekerSignupForm, 
     RecruiterSignupForm, JobSeekerProfileForm, RecruiterProfileForm,
-    EducationForm, WorkExperienceForm, PrivacySettingsForm
+    EducationForm, WorkExperienceForm, PrivacySettingsForm, EmailCandidateForm
 )
 from .models import UserProfile, Education, WorkExperience
 
@@ -292,3 +294,80 @@ def privacy_settings(request):
     
     template_data['form'] = form
     return render(request, 'accounts/privacy_settings.html', {'template_data': template_data})
+@login_required
+def email_candidate(request, user_id):
+    """Send email to a candidate (recruiters only)"""
+    # Check if user is a recruiter
+    try:
+        if not request.user.profile.is_recruiter:
+            messages.error(request, 'Only recruiters can email candidates.')
+            return redirect('home.index')
+    except:
+        messages.error(request, 'Profile not found.')
+        return redirect('home.index')
+    
+    # Get the candidate user
+    candidate = get_object_or_404(User, id=user_id)
+    
+    # Ensure the candidate is actually a job seeker
+    try:
+        if not candidate.profile.is_job_seeker:
+            messages.error(request, 'This user is not a job seeker.')
+            return redirect('home.index')
+    except:
+        messages.error(request, 'Profile not found for this candidate.')
+        return redirect('home.index')
+    
+    template_data = {
+        'title': f'Email Candidate',
+        'candidate': candidate,
+        'candidate_profile': candidate.profile.job_seeker_profile
+    }
+    
+    if request.method == 'POST':
+        form = EmailCandidateForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            
+            # Add recruiter information to the message
+            recruiter_name = f"{request.user.get_full_name() or request.user.username}"
+            recruiter_email = request.user.email
+            recruiter_company = getattr(request.user.profile.recruiter_profile, 'company_name', '')
+            
+            full_message = f"{message}\n\n---\nSent from JobSite by {recruiter_name}"
+            if recruiter_company:
+                full_message += f" from {recruiter_company}"
+            if recruiter_email:
+                full_message += f"\nEmail: {recruiter_email}"
+            
+            try:
+                # Send the email using Django's email backend
+                send_mail(
+                    subject=subject,
+                    message=full_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER,
+                    recipient_list=[candidate.email],
+                    fail_silently=False,
+                )
+                
+                messages.success(request, f'Email sent successfully to {candidate.email}!')
+                return redirect('accounts.profile', username=candidate.username)
+            except Exception as e:
+                messages.error(request, f'Failed to send email. Please check your email configuration. Error: {str(e)}')
+                template_data['form'] = form
+                return render(request, 'accounts/email_candidate.html', {'template_data': template_data})
+    else:
+        form = EmailCandidateForm()
+        # Pre-fill subject if coming from a job application
+        if 'job_id' in request.GET:
+            job_id = request.GET.get('job_id')
+            try:
+                from jobs.models import Job
+                job = Job.objects.get(id=job_id)
+                form.fields['subject'].initial = f'Regarding your application for {job.title}'
+            except:
+                pass
+    
+    template_data['form'] = form
+    return render(request, 'accounts/email_candidate.html', {'template_data': template_data})
