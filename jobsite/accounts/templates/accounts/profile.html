@@ -281,11 +281,8 @@
         <div class="card">
           <div class="card-body">
             <h5>Actions</h5>
-            <a href="{% url 'accounts.email_candidate' template_data.user_profile.user.id %}" class="btn btn-primary w-100 mb-2">
-              <i class="fas fa-envelope-open-text"></i> Email Candidate
-            </a>
             <a href="{% url 'messaging:compose_message' template_data.user_profile.user.id %}" class="btn btn-info w-100 mb-2">
-              <i class="fas fa-comment"></i> Message Candidate
+              <i class="fas fa-envelope"></i> Message Candidate
             </a>
           </div>
         </div>
