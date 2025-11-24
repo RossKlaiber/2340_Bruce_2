@@ -10,66 +10,68 @@
             <i class="fas fa-plus"></i> Post a New Job
           </a>
         </div>
-        
+
         {% if template_data.jobs %}
-          {% for job in template_data.jobs %}
-          <div class="card mb-3">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-8">
-                  <h5 class="card-title">
-                    <a href="{% url 'jobs.detail' job.id %}" class="text-decoration-none">
-                      {{ job.title }}
-                    </a>
-                    {% if not job.is_active %}
-                    <span class="badge bg-secondary ms-2">Inactive</span>
-                    {% endif %}
-                  </h5>
-                  <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
-                  <p class="card-text">
-                    <i class="fas fa-map-marker-alt"></i> {{ job.location }} |
-                    <i class="fas fa-briefcase"></i> {{ job.get_job_type_display }} |
-                    <i class="fas fa-user-tie"></i> {{ job.get_experience_level_display }}
-                  </p>
-                  <p class="card-text">{{ job.description|truncatewords:30 }}</p>
-                  <div class="mt-2">
-                    <small class="text-muted">
-                      <i class="fas fa-users"></i> 
-                      {{ job.application_count }} application{{ job.application_count|pluralize }}
-                      {% if job.new_applications_count > 0 %}
-                        | <span class="text-warning">{{ job.new_applications_count }} new</span>
-                      {% endif %}
-                    </small>
-                  </div>
-                </div>
-                <div class="col-md-4 text-end">
-                  <div class="mb-2">
-                    <span class="badge bg-success fs-6">{{ job.salary_range }}</span>
-                  </div>
+        {% for job in template_data.jobs %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h5 class="card-title">
+                  <a href="{% url 'jobs.detail' job.id %}" class="text-decoration-none">
+                    {{ job.title }}
+                  </a>
+                  {% if not job.is_active %}
+                  <span class="badge bg-secondary ms-2">Inactive</span>
+                  {% endif %}
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
+                <p class="card-text">
+                  <i class="fas fa-map-marker-alt"></i> {{ job.location }} |
+                  <i class="fas fa-briefcase"></i> {{ job.get_job_type_display }} |
+                  <i class="fas fa-user-tie"></i> {{ job.get_experience_level_display }}
+                </p>
+                <p class="card-text">{{ job.description|truncatewords:30 }}</p>
+                <div class="mt-2">
                   <small class="text-muted">
-                    Posted {{ job.created_at|timesince }} ago
+                    <i class="fas fa-users"></i>
+                    {{ job.application_count }} application{{ job.application_count|pluralize }}
+                    {% if job.new_applications_count > 0 %}
+                    | <span class="text-warning">{{ job.new_applications_count }} new</span>
+                    {% endif %}
                   </small>
-                  <div class="mt-2">
-                    <a href="{% url 'jobs.detail' job.id %}" class="btn btn-outline-primary btn-sm">
-                      View
-                    </a>
-                    <a href="{% url 'jobs.edit' job.id %}" class="btn btn-outline-secondary btn-sm">
-                      Edit
-                    </a>
-                    <a href="{% url 'jobs.applications' job.id %}" class="btn btn-outline-info btn-sm position-relative">
-                      <i class="fas fa-users"></i> Applications
-                      {% if job.new_applications_count > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
-                          {{ job.new_applications_count }}
-                        </span>
-                      {% endif %}
-                    </a>
-                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="mb-2">
+                  <span class="badge bg-success fs-6">{{ job.salary_range }}</span>
+                </div>
+                <small class="text-muted">
+                  Posted {{ job.created_at|timesince }} ago
+                </small>
+                <div class="mt-2">
+                  <a href="{% url 'jobs.detail' job.id %}" class="btn btn-outline-primary btn-sm">
+                    View
+                  </a>
+                  <a href="{% url 'jobs.edit' job.id %}" class="btn btn-outline-secondary btn-sm">
+                    Edit
+                  </a>
+                  <a href="{% url 'jobs.applications' job.id %}"
+                    class="btn btn-outline-info btn-sm position-relative overflow-visible">
+                    <i class="fas fa-users"></i> Applications
+                    {% if job.new_applications_count > 0 %}
+                    <span
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning overflow-visible">
+                      {{ job.new_applications_count }}
+                    </span>
+                    {% endif %}
+                  </a>
                 </div>
               </div>
             </div>
           </div>
-          {% endfor %}
+        </div>
+        {% endfor %}
         {% else %}
         <div class="text-center py-5">
           <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>

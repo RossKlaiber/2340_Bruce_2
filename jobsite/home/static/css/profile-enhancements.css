@@ -1,0 +1,293 @@
+/* Profile Page Enhancements */
+
+/* Profile Header with Gradient Background */
+.profile-header {
+  background: var(--gradient-hero);
+  padding: 3rem 0 2rem;
+  margin: -1rem -1rem 2rem -1rem;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-header::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
+  top: -150px;
+  right: -100px;
+  border-radius: 50%;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  background: var(--gradient-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.profile-name {
+  color: var(--color-text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-type {
+  color: var(--color-text-secondary);
+  font-size: 1.125rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Skills Section Enhancement */
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.skill-tag {
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  transition: all var(--transition-base);
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-accent);
+  opacity: 0.1;
+  transition: left var(--transition-bounce);
+}
+
+.skill-tag:hover::before {
+  left: 0;
+}
+
+.skill-tag:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-amber-glow);
+}
+
+/* Experience Timeline */
+.experience-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.experience-timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--gradient-accent);
+  border-radius: 2px;
+}
+
+.experience-item {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.experience-item::before {
+  content: '';
+  position: absolute;
+  left: -2.375rem;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  background: var(--color-amber-glow);
+  border-radius: 50%;
+  border: 3px solid var(--color-surface-elevated);
+  box-shadow: 0 0 0 3px var(--color-amber-glow);
+}
+
+/* Quick Actions Sidebar */
+.quick-actions-card {
+  position: sticky;
+  top: 2rem;
+}
+
+.quick-actions-card .btn {
+  margin-bottom: 0.75rem;
+}
+
+/* Social Links Enhancement */
+.social-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.social-link {
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.social-link:hover {
+  transform: translateY(-3px);
+}
+
+/* Resume Button Enhancement */
+.resume-button {
+  background: var(--gradient-accent);
+  border: none;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  transition: all var(--transition-base);
+}
+
+.resume-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.5);
+}
+
+/* Privacy Badge Enhancement */
+.privacy-badge {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+/* Availability Badge */
+.availability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.availability-badge.available {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--color-success);
+}
+
+.availability-badge.unavailable {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.availability-badge i {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Education and Experience Cards */
+.timeline-card {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: all var(--transition-base);
+}
+
+.timeline-card:hover {
+  transform: translateX(8px);
+  border-color: var(--color-border-light);
+  box-shadow: 0 8px 24px rgba(74, 44, 109, 0.2);
+}
+
+.timeline-card h6 {
+  color: var(--color-text-primary);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-card .text-muted {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.9rem;
+}
+
+/* Action Buttons in Cards */
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Profile Completion Indicator */
+.profile-completion {
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.completion-bar {
+  height: 8px;
+  background: var(--color-surface);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.completion-progress {
+  height: 100%;
+  background: var(--gradient-accent);
+  border-radius: 4px;
+  transition: width 1s ease-out;
+}
+
+.completion-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.completion-percentage {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-amber-glow);
+}

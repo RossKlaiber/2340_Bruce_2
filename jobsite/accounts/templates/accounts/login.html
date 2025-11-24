@@ -3,32 +3,39 @@
 <div class="p-3 mt-4">
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card shadow p-3 mb-4 rounded">
-          <div class="card-body">
-            <h2>Login</h2>
-            <hr />
+      <div class="col-md-6 col-lg-5">
+        <div class="card shadow p-3 mb-4">
+          <div class="card-body p-4">
+            <div class="text-center mb-4">
+              <h2 class="gradient-text">Welcome Back</h2>
+              <p class="text-muted">Sign in to continue to JobSite</p>
+            </div>
             {% if template_data.error %}
             <div class="alert alert-danger" role="alert">
-              {{ template_data.error }}
+              <i class="fas fa-exclamation-circle"></i> {{ template_data.error }}
             </div>
             {% endif %}
             <form method="POST">
               {% csrf_token %}
-              <p>
-                <label for="username">Username</label>
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
                 <input id="username" type="text" name="username" required
-                  autocomplete="username" class="form-control">
-              </p>
-              <p>
-                <label for="password">Password</label>
+                  autocomplete="username" class="form-control" placeholder="Enter your username">
+              </div>
+              <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
                 <input id="password" type="password" name="password" required
-                  autocomplete="current-password" class="form-control">
-              </p>
-              <div class="text-center">
-                <button type="submit" class="btn bg-dark text-white">
-                  Login
+                  autocomplete="current-password" class="form-control" placeholder="Enter your password">
+              </div>
+              <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
+              </div>
+              <div class="text-center">
+                <small class="text-muted">
+                  Don't have an account? <a href="{% url 'accounts.signup' %}" class="text-decoration-none">Sign up</a>
+                </small>
               </div>
             </form>
           </div>

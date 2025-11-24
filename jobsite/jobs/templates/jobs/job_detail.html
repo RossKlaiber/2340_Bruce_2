@@ -8,57 +8,63 @@
           <div class="card-body">
             <h2 class="card-title">{{ template_data.job.title }}</h2>
             <h4 class="card-subtitle mb-3 text-muted">{{ template_data.job.company }}</h4>
-            
+
             <div class="row mb-4">
               <div class="col-md-6">
                 <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {{ template_data.job.location }}</p>
-                <p><i class="fas fa-briefcase"></i> <strong>Job Type:</strong> {{ template_data.job.get_job_type_display }}</p>
-                <p><i class="fas fa-user-tie"></i> <strong>Experience Level:</strong> {{ template_data.job.get_experience_level_display }}</p>
-                <p><i class="fas fa-home"></i> <strong>Work Type:</strong> {{ template_data.job.get_work_type_display }}</p>
+                <p><i class="fas fa-briefcase"></i> <strong>Job Type:</strong> {{ template_data.job.get_job_type_display
+                  }}</p>
+                <p><i class="fas fa-user-tie"></i> <strong>Experience Level:</strong> {{
+                  template_data.job.get_experience_level_display }}</p>
+                <p><i class="fas fa-home"></i> <strong>Work Type:</strong> {{ template_data.job.get_work_type_display }}
+                </p>
               </div>
               <div class="col-md-6">
                 <p><i class="fas fa-dollar-sign"></i> <strong>Salary:</strong> {{ template_data.job.salary_range }}</p>
-                <p><i class="fas fa-calendar"></i> <strong>Posted:</strong> {{ template_data.job.created_at|date:"F d, Y" }}</p>
+                <p><i class="fas fa-calendar"></i> <strong>Posted:</strong> {{ template_data.job.created_at|date:"F d,
+                  Y" }}</p>
                 {% if template_data.job.application_deadline %}
-                <p><i class="fas fa-clock"></i> <strong>Deadline:</strong> {{ template_data.job.application_deadline|date:"F d, Y" }}</p>
+                <p><i class="fas fa-clock"></i> <strong>Deadline:</strong> {{
+                  template_data.job.application_deadline|date:"F d, Y" }}</p>
                 {% endif %}
                 {% if template_data.job.visa_sponsorship %}
-                <p><i class="fas fa-globe"></i> <strong>Visa Sponsorship:</strong> <span class="badge bg-success">Available</span></p>
+                <p><i class="fas fa-globe"></i> <strong>Visa Sponsorship:</strong> <span
+                    class="badge bg-success">Available</span></p>
                 {% endif %}
               </div>
             </div>
-            
+
             <!-- Office Location Map -->
             {% if template_data.job.has_coordinates %}
             <div class="mb-4">
               <h5><i class="fas fa-map-marker-alt text-primary"></i> Office Location</h5>
               <div id="job-map" style="height: 300px; width: 100%; border: 1px solid #ddd; border-radius: 5px;"></div>
               <div class="form-text mt-2">
-                <i class="fas fa-info-circle"></i> 
+                <i class="fas fa-info-circle"></i>
                 Exact office location as provided by the employer
               </div>
             </div>
             {% endif %}
-            
+
             {% if template_data.job.skills_list %}
             <div class="mb-4">
               <h5>Required Skills</h5>
               <div class="d-flex flex-wrap gap-2">
                 {% for skill in template_data.job.skills_list %}
-                  <span class="badge bg-primary">{{ skill }}</span>
+                <span class="badge bg-primary">{{ skill }}</span>
                 {% endfor %}
               </div>
             </div>
             {% endif %}
-            
+
             <hr>
-            
+
             <h5>Job Description</h5>
             <p class="mb-4">{{ template_data.job.description|linebreaks }}</p>
-            
+
             <h5>Requirements</h5>
             <p class="mb-4">{{ template_data.job.requirements|linebreaks }}</p>
-            
+
             {% if template_data.job.benefits %}
             <h5>Benefits & Perks</h5>
             <p class="mb-4">{{ template_data.job.benefits|linebreaks }}</p>
@@ -66,33 +72,31 @@
           </div>
         </div>
       </div>
-      
+
       <div class="col-md-4">
         <div class="card">
           <div class="card-body">
             <h5>Apply for this position</h5>
             <p class="text-muted">Contact the employer directly or apply through their preferred method.</p>
             {% if user.is_authenticated and user.profile.is_job_seeker %}
-              {% if template_data.has_applied %}
-                <button class="btn btn-success w-100 mb-3" disabled>
-                  <i class="fas fa-check"></i> Already Applied
-                </button>
-              {% else %}
-                <button class="btn btn-primary w-100 mb-3 apply-now-btn" 
-                        data-job-id="{{ template_data.job.id }}" 
-                        data-job-title="{{ template_data.job.title }}" 
-                        data-company="{{ template_data.job.company }}">
-                  <i class="fas fa-paper-plane"></i> Apply Now
-                </button>
-              {% endif %}
-            {% elif user.is_authenticated %}
-              <p class="text-muted">Only job seekers can apply to positions.</p>
+            {% if template_data.has_applied %}
+            <button class="btn btn-success w-100 mb-3" disabled>
+              <i class="fas fa-check"></i> Already Applied
+            </button>
             {% else %}
-              <a href="{% url 'accounts.login' %}" class="btn btn-primary w-100 mb-3">
-                <i class="fas fa-sign-in-alt"></i> Login to Apply
-              </a>
+            <button class="btn btn-primary w-100 mb-3 apply-now-btn" data-job-id="{{ template_data.job.id }}"
+              data-job-title="{{ template_data.job.title }}" data-company="{{ template_data.job.company }}">
+              <i class="fas fa-paper-plane"></i> Apply Now
+            </button>
             {% endif %}
-            
+            {% elif user.is_authenticated %}
+            <p class="text-muted">Only job seekers can apply to positions.</p>
+            {% else %}
+            <a href="{% url 'accounts.login' %}" class="btn btn-primary w-100 mb-3">
+              <i class="fas fa-sign-in-alt"></i> Login to Apply
+            </a>
+            {% endif %}
+
             <div class="d-grid gap-2">
               <button class="btn btn-outline-secondary">
                 <i class="fas fa-heart"></i> Save Job
@@ -103,13 +107,14 @@
             </div>
           </div>
         </div>
-        
+
         <div class="card mt-3">
           <div class="card-body">
             <h6>Posted by</h6>
-            <p class="mb-1"><strong>{{ template_data.job.posted_by.get_full_name|default:template_data.job.posted_by.username }}</strong></p>
+            <p class="mb-1"><strong>{{
+                template_data.job.posted_by.get_full_name|default:template_data.job.posted_by.username }}</strong></p>
             <p class="text-muted small">Member since {{ template_data.job.posted_by.date_joined|date:"F Y" }}</p>
-            
+
             {% if user == template_data.job.posted_by %}
             <hr>
             <div class="d-grid gap-2">
@@ -149,9 +154,9 @@
           </div>
           <div class="mb-3">
             <label for="coverNote" class="form-label">Cover Note *</label>
-            <textarea class="form-control" id="coverNote" name="cover_note" rows="4" 
-                      placeholder="Tell the employer why you're interested in this position and why you'd be a great fit..." 
-                      required></textarea>
+            <textarea class="form-control" id="coverNote" name="cover_note" rows="4"
+              placeholder="Tell the employer why you're interested in this position and why you'd be a great fit..."
+              required></textarea>
             <div class="form-text">Write a personalized note to accompany your application</div>
           </div>
         </div>
@@ -167,10 +172,10 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const applyButton = document.querySelector('.apply-now-btn');
     if (!applyButton) return; // No apply button on this page
-    
+
     const applicationModalElement = document.getElementById('applicationModal');
     if (!applicationModalElement) return; // No modal element present
     const applicationModal = new bootstrap.Modal(applicationModalElement);
@@ -178,140 +183,141 @@ document.addEventListener('DOMContentLoaded', function() {
     const jobTitleDisplay = document.getElementById('jobTitleDisplay');
     const companyDisplay = document.getElementById('companyDisplay');
     const coverNoteTextarea = document.getElementById('coverNote');
-    
+
     let currentJobId = null;
-    
+
     // Handle Apply Now button click
-    applyButton.addEventListener('click', function() {
-        currentJobId = this.dataset.jobId;
-        const jobTitle = this.dataset.jobTitle;
-        const company = this.dataset.company;
-        
-        jobTitleDisplay.textContent = jobTitle;
-        companyDisplay.textContent = company;
-        coverNoteTextarea.value = '';
-        
-        applicationModal.show();
+    applyButton.addEventListener('click', function () {
+      currentJobId = this.dataset.jobId;
+      const jobTitle = this.dataset.jobTitle;
+      const company = this.dataset.company;
+
+      jobTitleDisplay.textContent = jobTitle;
+      companyDisplay.textContent = company;
+      coverNoteTextarea.value = '';
+
+      applicationModal.show();
     });
-    
+
     // Handle form submission
-    applicationForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        if (!currentJobId) return;
-        
-        const formData = new FormData();
-        formData.append('cover_note', coverNoteTextarea.value);
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        
-        // Disable submit button
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-        submitBtn.disabled = true;
-        
-        fetch(`/jobs/${currentJobId}/apply/`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
+    applicationForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      if (!currentJobId) return;
+
+      const formData = new FormData();
+      formData.append('cover_note', coverNoteTextarea.value);
+      formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+      // Disable submit button
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+      submitBtn.disabled = true;
+
+      fetch(`/jobs/${currentJobId}/apply/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                applicationModal.hide();
-                // Show success message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show';
-                alertDiv.innerHTML = `
+          if (data.success) {
+            applicationModal.hide();
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
                     <strong>Success!</strong> ${data.message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
-                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-                
-                // Update the button to show applied status
-                applyButton.innerHTML = '<i class="fas fa-check"></i> Already Applied';
-                applyButton.classList.remove('btn-primary');
-                applyButton.classList.add('btn-success');
-                applyButton.disabled = true;
-            } else {
-                // Show error message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    <strong>Error!</strong> ${data.error}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                applicationModal.hide();
-                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+
+            // Update the button to show applied status
+            applyButton.innerHTML = '<i class="fas fa-check"></i> Already Applied';
+            applyButton.classList.remove('btn-primary');
+            applyButton.classList.add('btn-success');
+            applyButton.disabled = true;
+          } else {
+            // Show error message
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-danger alert-dismissible fade show';
             alertDiv.innerHTML = `
+                    <strong>Error!</strong> ${data.error}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+            applicationModal.hide();
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+          alertDiv.innerHTML = `
                 <strong>Error!</strong> Something went wrong. Please try again.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
-            applicationModal.hide();
-            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+          applicationModal.hide();
+          document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
         })
         .finally(() => {
-            // Re-enable submit button
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+          // Re-enable submit button
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
         });
     });
-});
+  });
 </script>
 
 <!-- Google Maps for Job Location Display -->
 {% if template_data.job.has_coordinates %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
 <script>
-function initJobMap() {
-    const jobLat = {{ template_data.job.latitude }};
-    const jobLng = {{ template_data.job.longitude }};
-    const jobLocation = { lat: jobLat, lng: jobLng };
-    
-    const map = new google.maps.Map(document.getElementById('job-map'), {
-        zoom: 15,
-        center: jobLocation,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true
-    });
-    
-    const marker = new google.maps.Marker({
-        position: jobLocation,
-        map: map,
-        title: '{{ template_data.job.company }} - {{ template_data.job.title }}',
-        animation: google.maps.Animation.DROP
-    });
-    
-    // Add info window with job details
-    const infoWindow = new google.maps.InfoWindow({
-        content: `
+  function initJobMap() {
+    const jobLat = {{ template_data.job.latitude }
+  };
+  const jobLng = {{ template_data.job.longitude }};
+  const jobLocation = { lat: jobLat, lng: jobLng };
+
+  const map = new google.maps.Map(document.getElementById('job-map'), {
+    zoom: 15,
+    center: jobLocation,
+    mapTypeControl: true,
+    streetViewControl: true,
+    fullscreenControl: true
+  });
+
+  const marker = new google.maps.Marker({
+    position: jobLocation,
+    map: map,
+    title: '{{ template_data.job.company }} - {{ template_data.job.title }}',
+    animation: google.maps.Animation.DROP
+  });
+
+  // Add info window with job details
+  const infoWindow = new google.maps.InfoWindow({
+    content: `
             <div style="padding: 10px;">
                 <h6><strong>{{ template_data.job.company }}</strong></h6>
                 <p style="margin: 5px 0;"><strong>{{ template_data.job.title }}</strong></p>
                 <p style="margin: 5px 0; color: #666;">{{ template_data.job.location }}</p>
             </div>
         `
-    });
-    
-    marker.addListener('click', function() {
-        infoWindow.open(map, marker);
-    });
-    
-    // Open info window by default
+  });
+
+  marker.addListener('click', function () {
     infoWindow.open(map, marker);
+  });
+
+  // Open info window by default
+  infoWindow.open(map, marker);
 }
 
-// Initialize map when page loads
-google.maps.event.addDomListener(window, 'load', initJobMap);
+  // Initialize map when page loads
+  google.maps.event.addDomListener(window, 'load', initJobMap);
 </script>
 {% endif %}
 {% endblock content %}
