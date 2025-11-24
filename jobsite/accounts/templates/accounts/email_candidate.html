@@ -25,7 +25,7 @@
           </div>
           
           <!-- Email Form -->
-          <form method="POST">
+          <form method="POST" id="email-candidate-form">
             {% csrf_token %}
             
             <div class="mb-3">
@@ -48,11 +48,15 @@
               {% endif %}
             </div>
             
+            <div id="send-confirmation" class="alert alert-info d-none" role="alert">
+              Sending your message now. You'll get a confirmation once it's sent.
+            </div>
+
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
               <a href="{% url 'accounts.profile' template_data.candidate.username %}" class="btn btn-outline-secondary">
                 <i class="fas fa-times"></i> Cancel
               </a>
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary" id="send-email-button">
                 <i class="fas fa-paper-plane"></i> Send Email
               </button>
             </div>
@@ -63,3 +67,21 @@
   </div>
 </div>
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+  (function() {
+    const form = document.getElementById('email-candidate-form');
+    const confirmation = document.getElementById('send-confirmation');
+    const sendButton = document.getElementById('send-email-button');
+
+    if (!form || !confirmation || !sendButton) return;
+
+    form.addEventListener('submit', function() {
+      confirmation.classList.remove('d-none');
+      sendButton.disabled = true;
+      sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    });
+  })();
+</script>
+{% endblock %}

@@ -4,8 +4,8 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.conf import settings
+import requests
 
 from accounts.utils import format_phone_number
 from .forms import (
@@ -14,6 +14,78 @@ from .forms import (
     EducationForm, WorkExperienceForm, PrivacySettingsForm, EmailCandidateForm
 )
 from .models import UserProfile, Education, WorkExperience
+
+RESEND_EMAIL_ENDPOINT = "https://api.resend.com/emails"
+
+
+def normalize_resend_sender(raw_sender: str) -> str:
+    """Ensure sender is in a valid format for Resend."""
+    if not raw_sender:
+        raise ValueError('Resend "from" address is not configured. Set RESEND_FROM_EMAIL to a verified sender.')
+
+    sender = raw_sender.strip()
+    if '<' in sender and '>' in sender:
+        return sender
+
+    if '@' not in sender:
+        raise ValueError('Resend "from" address must include a valid email.')
+
+    parts = sender.split()
+    if len(parts) > 1:
+        email = parts[-1]
+        name = ' '.join(parts[:-1]).strip()
+        if '@' not in email:
+            raise ValueError('Resend "from" address must include a valid email.')
+        return f"{name} <{email}>" if name else email
+
+    return sender
+
+
+def send_candidate_email_via_resend(to_email: str, subject: str, full_message: str, recruiter_email: str | None = None):
+    """Send candidate email via Resend API."""
+    api_key = getattr(settings, 'RESEND_API_KEY', '')
+    if not api_key:
+        raise ValueError('Resend API key is not configured.')
+
+    sender = getattr(settings, 'RESEND_FROM_EMAIL', '') or settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    sender = normalize_resend_sender(sender)
+
+    payload = {
+        'from': sender,
+        'to': [to_email],
+        'subject': subject,
+        'text': full_message,
+        'html': full_message.replace('\n', '<br>'),
+    }
+
+    if recruiter_email:
+        payload['reply_to'] = recruiter_email
+
+    response = requests.post(
+        RESEND_EMAIL_ENDPOINT,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        },
+        json=payload,
+        timeout=10
+    )
+
+    if response.status_code >= 400:
+        error_message = None
+        try:
+            error_json = response.json()
+            error_message = error_json.get('message') or error_json.get('error')
+        except Exception:
+            error_message = None
+
+        if not error_message:
+            error_message = response.text
+
+        raise ValueError(f"Resend API error ({response.status_code}): {error_message}")
+
+    return response.json()
+
 
 @login_required
 def logout(request):
@@ -342,15 +414,13 @@ def email_candidate(request, user_id):
                 full_message += f"\nEmail: {recruiter_email}"
             
             try:
-                # Send the email using Django's email backend
-                send_mail(
+                send_candidate_email_via_resend(
+                    to_email=candidate.email,
                     subject=subject,
-                    message=full_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER,
-                    recipient_list=[candidate.email],
-                    fail_silently=False,
+                    full_message=full_message,
+                    recruiter_email=recruiter_email
                 )
-                
+
                 messages.success(request, f'Email sent successfully to {candidate.email}!')
                 return redirect('accounts.profile', username=candidate.username)
             except Exception as e:
