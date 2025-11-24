@@ -119,6 +119,12 @@
                             {{ application.cover_note|linebreaks }}
                           </p>
                           
+                          <div class="mb-2">
+                            <a href="{% url 'accounts.email_candidate' application.applicant.id %}?job_id={{ template_data.job.id }}" class="btn btn-sm btn-primary w-100">
+                              <i class="fas fa-envelope"></i> Email Candidate
+                            </a>
+                          </div>
+                          
                           {% if application.applicant.profile.job_seeker_profile.linkedin_url or application.applicant.profile.job_seeker_profile.github_url or application.applicant.profile.job_seeker_profile.portfolio_url %}
                           <div class="mb-2">
                             {% if application.applicant.profile.job_seeker_profile.linkedin_url %}
@@ -184,6 +190,15 @@
                     
                     <h6>Cover Note:</h6>
                     <p class="card-text">{{ application.cover_note|linebreaks }}</p>
+                    
+                    <div class="mb-3">
+                      <a href="{% url 'accounts.email_candidate' application.applicant.id %}?job_id={{ template_data.job.id }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-envelope"></i> Email Candidate
+                      </a>
+                      <a href="{% url 'accounts.profile' application.applicant.username %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-user"></i> View Profile
+                      </a>
+                    </div>
                     
                     {% if application.applicant.profile.job_seeker_profile %}
                       {% with profile=application.applicant.profile.job_seeker_profile %}

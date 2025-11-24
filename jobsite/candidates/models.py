@@ -16,3 +16,18 @@ class SavedCandidateSearch(models.Model):
 
     class Meta:
         verbose_name_plural = "Saved Candidate Searches"
+
+
+class LocationCoordinate(models.Model):
+    """Stores latitude and longitude for candidate-provided locations."""
+
+    search_term = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, unique=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    display_name = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.display_name or self.search_term
