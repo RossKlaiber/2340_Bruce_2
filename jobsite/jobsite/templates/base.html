@@ -1,77 +1,89 @@
 <!DOCTYPE html>
 <html>
-  {% load static %}
-  <head>
-    <title>{{ template_data.title }}</title>
-    <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" >
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"crossorigin="anonymous"></script>
+{% load static %}
 
-    <!-- jQuery and jQuery UI -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
+<head>
+  <title>{{ template_data.title }}</title>
+  <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"></script>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- jQuery and jQuery UI -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 
-    {% block extra_head %}{% endblock %}
-  </head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
 
-  <body class="d-flex flex-column min-vh-100">
-    <!-- Header -->
-    <nav class="p-3 navbar navbar-dark bg-dark navbar-expand-lg">
-      <div class="container">
-        <a class="navbar-brand" href="{% url 'home.index' %}">
-          <p class="mb-0">JobSite</p>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
-          aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-          <div class="navbar-nav ms-auto navbar-ml">
-            <a class="nav-link" href="{% url 'jobs.list' %}">Jobs</a>
-            {% if user.is_authenticated %}
-              {% if user.profile.is_recruiter %}
-                <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
-                <a class="nav-link" href="{% url 'candidates.candidate_search' %}">Find Talent</a>
-              {% elif user.profile.is_job_seeker %}
-                <a class="nav-link" href="{% url 'jobs.my_applications' %}">My Applications</a>
-              {% endif %}
-              <a class="nav-link" href="{% url 'messaging:inbox' %}">Messages</a>
-              <div class="vr bg-white mx-2 d-none d-lg-block"></div>
-              <a class="nav-link" href="{% url 'accounts.profile' user.username %}">Profile</a>
-              <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>
-            {% else %}
-              <a class="nav-link" href="{% url 'accounts.login' %}">Login</a>
-              <a class="nav-link" href="{% url 'accounts.signup' %}">Sign Up</a>
-            {% endif %}
-          </div>
+<body class="d-flex flex-column min-vh-100">
+  <!-- Header -->
+  <nav class="p-3 navbar navbar-dark bg-dark navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home.index' %}">
+        <p class="mb-0">JobSite</p>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+        aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav ms-auto navbar-ml">
+          <a class="nav-link" href="{% url 'jobs.list' %}">Jobs</a>
+          {% if user.is_authenticated %}
+          {% if user.is_superuser and not user.profile.is_recruiter and not user.profile.is_job_seeker %}
+          {# Exclusively admin - minimal navbar #}
+          <a class="nav-link" href="{% url 'messaging:inbox' %}">Messages</a>
+          <div class="vr bg-white mx-2 d-none d-lg-block"></div>
+          <a class="nav-link" href="{% url 'home.admin_dashboard' %}">Admin</a>
+          <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>
+          {% else %}
+          {# Regular user or superuser with a role #}
+          {% if user.profile.is_recruiter %}
+          <a class="nav-link" href="{% url 'jobs.my_jobs' %}">My Jobs</a>
+          <a class="nav-link" href="{% url 'candidates.candidate_search' %}">Find Talent</a>
+          {% elif user.profile.is_job_seeker %}
+          <a class="nav-link" href="{% url 'jobs.my_applications' %}">My Applications</a>
+          {% endif %}
+          <a class="nav-link" href="{% url 'messaging:inbox' %}">Messages</a>
+          <div class="vr bg-white mx-2 d-none d-lg-block"></div>
+          <a class="nav-link" href="{% url 'accounts.profile' user.username %}">Profile</a>
+          {% if user.is_superuser %}
+          <a class="nav-link" href="{% url 'home.admin_dashboard' %}">Admin</a>
+          {% endif %}
+          <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a>
+          {% endif %}
+          {% else %}
+          <a class="nav-link" href="{% url 'accounts.login' %}">Login</a>
+          <a class="nav-link" href="{% url 'accounts.signup' %}">Sign Up</a>
+          {% endif %}
         </div>
       </div>
-    </nav>
-    <!-- Header -->
-
-    <div class="flex-grow-1">
-      {% block content %}
-      {% endblock content %}
     </div>
+  </nav>
+  <!-- Header -->
 
-    <!-- Footer -->
-    <section class="p-3 ms-footer-bottom bg-dark">
-      <div class="container d-flex justify-content-between">
-        <div class="me-5 text-white">
-          <span>Built by Bruce Team 2</span>
-        </div>
-        <div class="text-white">
-          <span>© Copyright - 2025</span>
-        </div>
+  <div class="flex-grow-1">
+    {% block content %}
+    {% endblock content %}
+  </div>
+
+  <!-- Footer -->
+  <section class="p-3 ms-footer-bottom bg-dark">
+    <div class="container d-flex justify-content-between">
+      <div class="me-5 text-white">
+        <span>Built by Bruce Team 2</span>
       </div>
-    </section>
-    <!-- Footer -->
+      <div class="text-white">
+        <span>© Copyright - 2025</span>
+      </div>
+    </div>
+  </section>
+  <!-- Footer -->
+</body>
 
-    {% block extra_scripts %}{% endblock %}
-  </body>
 </html>

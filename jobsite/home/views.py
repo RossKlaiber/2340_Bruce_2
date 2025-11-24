@@ -29,6 +29,18 @@ def dashboard(request):
     
     new_user = request.GET.get("new_user") == "true"
     
+    if request.user.is_superuser:
+        has_valid_profile = False
+        if hasattr(request.user, 'profile'):
+            profile = request.user.profile
+            if profile.is_job_seeker and hasattr(profile, 'job_seeker_profile'):
+                has_valid_profile = True
+            elif profile.is_recruiter and hasattr(profile, 'recruiter_profile'):
+                has_valid_profile = True
+        
+        if not has_valid_profile:
+            return redirect('home.admin_dashboard')
+    
     if request.user.profile.is_job_seeker:
         """Job seeker dashboard"""
         # Get application statistics
@@ -74,3 +86,137 @@ def dashboard(request):
         }
         
         return render(request, 'home/recruiter_dashboard.html', {'template_data': template_data})
+
+def is_superuser(user):
+    return user.is_superuser
+
+@login_required
+def admin_dashboard(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Administrator privileges required.")
+        return redirect('home.index')
+        
+    template_data = {
+        'title': 'Administrator Dashboard',
+    }
+    return render(request, 'home/admin_dashboard.html', {'template_data': template_data})
+
+import csv
+import zipfile
+import io
+from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+def _write_users_csv(writer):
+    writer.writerow(['Username', 'Email', 'Date Joined', 'User Type', 'Is Active'])
+    users = User.objects.select_related('profile').all()
+    for user in users:
+        user_type = 'Unknown'
+        if hasattr(user, 'profile'):
+            user_type = user.profile.get_user_type_display()
+        elif user.is_superuser:
+            user_type = 'Administrator'
+            
+        writer.writerow([
+            user.username,
+            user.email,
+            user.date_joined.strftime('%Y-%m-%d'),
+            user_type,
+            user.is_active
+        ])
+
+def _write_jobs_csv(writer):
+    writer.writerow(['Title', 'Company', 'Posted By', 'Created At', 'Status', 'Applications'])
+    jobs = Job.objects.select_related('posted_by').all()
+    for job in jobs:
+        writer.writerow([
+            job.title,
+            job.company,
+            job.posted_by.username,
+            job.created_at.strftime('%Y-%m-%d'),
+            'Active' if job.is_active else 'Inactive',
+            job.applications.count()
+        ])
+
+def _write_applications_csv(writer):
+    writer.writerow(['Applicant', 'Job Title', 'Company', 'Status', 'Applied At'])
+    applications = Application.objects.select_related('applicant', 'job').all()
+    for app in applications:
+        writer.writerow([
+            app.applicant.username,
+            app.job.title,
+            app.job.company,
+            app.get_status_display(),
+            app.applied_at.strftime('%Y-%m-%d')
+        ])
+
+@login_required
+def export_users_csv(request):
+    if not request.user.is_superuser:
+        return HttpResponse("Unauthorized", status=401)
+
+    timestamp = timezone.now().strftime('%Y-%m-%d')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="jobsite_users_{timestamp}.csv"'
+
+    writer = csv.writer(response)
+    _write_users_csv(writer)
+    return response
+
+@login_required
+def export_jobs_csv(request):
+    if not request.user.is_superuser:
+        return HttpResponse("Unauthorized", status=401)
+
+    timestamp = timezone.now().strftime('%Y-%m-%d')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="jobsite_jobs_{timestamp}.csv"'
+
+    writer = csv.writer(response)
+    _write_jobs_csv(writer)
+    return response
+
+@login_required
+def export_applications_csv(request):
+    if not request.user.is_superuser:
+        return HttpResponse("Unauthorized", status=401)
+
+    timestamp = timezone.now().strftime('%Y-%m-%d')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="jobsite_applications_{timestamp}.csv"'
+
+    writer = csv.writer(response)
+    _write_applications_csv(writer)
+    return response
+
+@login_required
+def export_all_data(request):
+    if not request.user.is_superuser:
+        return HttpResponse("Unauthorized", status=401)
+
+    timestamp = timezone.now().strftime('%Y-%m-%d')
+    zip_filename = f"jobsite_all_data_{timestamp}.zip"
+    
+    # Create an in-memory ZIP file
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Users CSV
+        users_buffer = io.StringIO()
+        _write_users_csv(csv.writer(users_buffer))
+        zip_file.writestr(f"jobsite_users_{timestamp}.csv", users_buffer.getvalue())
+        
+        # Jobs CSV
+        jobs_buffer = io.StringIO()
+        _write_jobs_csv(csv.writer(jobs_buffer))
+        zip_file.writestr(f"jobsite_jobs_{timestamp}.csv", jobs_buffer.getvalue())
+        
+        # Applications CSV
+        apps_buffer = io.StringIO()
+        _write_applications_csv(csv.writer(apps_buffer))
+        zip_file.writestr(f"jobsite_applications_{timestamp}.csv", apps_buffer.getvalue())
+
+    # Prepare response
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+    return response
