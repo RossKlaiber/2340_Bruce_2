@@ -309,14 +309,6 @@ a:hover {
   transform: translateY(-2px);
 }
 
-.btn-outline-primary i {
-  color: var(--color-primary);
-}
-
-.btn-outline-primary:hover i {
-  color: #ffffff;
-}
-
 .btn-light {
   background: #f8f9fa;
   color: #212529;
@@ -388,6 +380,12 @@ a:hover {
 
 .btn-outline-info:hover i {
   color: #000000;
+}
+
+.btn-outline-success {
+  border: 2px solid var(--color-success);
+  color: var(--color-success);
+  background: transparent;
 }
 
 .btn-warning {
