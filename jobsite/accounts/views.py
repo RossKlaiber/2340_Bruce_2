@@ -4,7 +4,7 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 
 from accounts.utils import format_phone_number
@@ -343,14 +343,16 @@ def email_candidate(request, user_id):
             
             try:
                 # Send the email using Django's email backend
-                send_mail(
+                email = EmailMessage(
                     subject=subject,
-                    message=full_message,
+                    body=full_message,
                     from_email=settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER,
-                    recipient_list=[candidate.email],
-                    fail_silently=False,
+                    to=[candidate.email],
+                    reply_to=[recruiter_email],
                 )
-                
+
+                email.send(fail_silently=False)
+
                 messages.success(request, f'Email sent successfully to {candidate.email}!')
                 return redirect('accounts.profile', username=candidate.username)
             except Exception as e:
