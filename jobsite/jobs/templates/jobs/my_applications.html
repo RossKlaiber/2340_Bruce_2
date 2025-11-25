@@ -43,12 +43,11 @@
                 <div class="card-body p-2 kanban-drop-zone" data-status="{{ group.code }}" style="min-height: 200px;">
                   {% for application in group.applications %}
                   <div class="card mb-2 shadow-sm application-card" 
-                       draggable="true"
+                       draggable="false"
                        data-application-id="{{ application.id }}"
                        data-status="{{ application.status }}">
                     <div class="card-body p-2">
                       <h6 class="card-title mb-1 text-truncate">
-                        <i class="fas fa-grip-vertical text-muted me-1" style="cursor: move;"></i>
                         <a href="{% url 'jobs.detail' application.job.id %}" class="text-decoration-none">
                           {{ application.job.title }}
                         </a>
@@ -465,23 +464,6 @@ function updateStatusCounts() {
 </script>
 
 <style>
-.application-card {
-    transition: transform 0.2s ease-in-out, opacity 0.2s;
-    cursor: move;
-    touch-action: none;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.application-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-}
-
-.application-card.dragging {
-    opacity: 0.5;
-}
-
 .card-header {
     border-bottom: 1px solid rgba(0,0,0,0.125);
 }

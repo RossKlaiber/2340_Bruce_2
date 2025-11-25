@@ -346,7 +346,7 @@ def email_candidate(request, user_id):
                 email = EmailMessage(
                     subject=subject,
                     body=full_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER,
+                    from_email = f"{recruiter_name} <{recruiter_email}>",
                     to=[candidate.email],
                     reply_to=[recruiter_email],
                 )
