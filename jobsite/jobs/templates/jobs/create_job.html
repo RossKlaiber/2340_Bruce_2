@@ -31,20 +31,28 @@
               <div class="mb-3">
                 <label for="{{ template_data.form.location.id_for_label }}" class="form-label">Location *</label>
                 {{ template_data.form.location }}
+                <div class="form-check mt-2">
+                  <input type="checkbox" class="form-check-input" id="remote-checkbox">
+                  <label for="remote-checkbox" class="form-check-label">
+                      Remote Job / Disable Location Pin
+                  </label>
+                </div>
                 {% if template_data.form.location.errors %}
                   <div class="text-danger">{{ template_data.form.location.errors }}</div>
                 {% endif %}
-                <div class="form-text">Enter the job location and click on the map to pin the exact location</div>
                 
                 <!-- Hidden coordinate fields -->
                 {{ template_data.form.latitude }}
                 {{ template_data.form.longitude }}
                 
                 <!-- Map container -->
-                <div id="map" style="height: 300px; width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px;"></div>
-                <div class="form-text mt-2">
-                  <i class="fas fa-map-marker-alt text-primary"></i> 
-                  Click on the map to set the exact office location pin
+                <div id="map-container">
+                    <div class="form-text">Click on the map to pin the exact location</div>
+                    <div id="map" style="height: 300px; width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px;"></div>
+                    <div class="form-text mt-2">
+                        <i class="fas fa-map-marker-alt text-primary"></i>
+                        Click on the map to set the exact office location pin
+                    </div>
                 </div>
               </div>
               
@@ -173,6 +181,16 @@ let map;
 let marker;
 let geocoder;
 
+let autocomplete = null;
+let autocompleteListener = null;
+
+// Global references (must be loaded before functions)
+const remoteCheckbox = document.getElementById('remote-checkbox');
+const mapContainer = document.getElementById('map-container');
+const locationInput = document.getElementById('location-input');
+const latField = document.getElementById('latitude-input');
+const lngField = document.getElementById('longitude-input');
+
 function initMap() {
     // Initialize the map
     map = new google.maps.Map(document.getElementById('map'), {
@@ -186,10 +204,6 @@ function initMap() {
     map.addListener('click', function(event) {
         placeMarker(event.latLng);
     });
-    
-    // Initialize marker if coordinates exist
-    const latField = document.getElementById('latitude-input');
-    const lngField = document.getElementById('longitude-input');
     
     if (latField.value && lngField.value) {
         const lat = parseFloat(latField.value);
@@ -217,25 +231,25 @@ function placeMarker(location) {
     });
     
     // Update form fields
-    document.getElementById('latitude-input').value = location.lat();
-    document.getElementById('longitude-input').value = location.lng();
+    latField.value = location.lat().toFixed(8);
+    lngField.value = location.lng().toFixed(8);
     
     // Add drag listener to update coordinates
     marker.addListener('dragend', function(event) {
-        document.getElementById('latitude-input').value = event.latLng.lat();
-        document.getElementById('longitude-input').value = event.latLng.lng();
+        latField.value = event.latLng.lat().toFixed(8);
+        lngField.value = event.latLng.lng().toFixed(8);
     });
     
     // Reverse geocode to update location field
     geocoder.geocode({ location: location }, function(results, status) {
         if (status === 'OK' && results[0]) {
-            document.getElementById('location-input').value = results[0].formatted_address;
+            locationInput.value = results[0].formatted_address;
         }
     });
 }
 
 // Geocode location input
-document.getElementById('location-input').addEventListener('blur', function() {
+locationInput.addEventListener('blur', function() {
     const address = this.value;
     if (address) {
         geocoder.geocode({ address: address }, function(results, status) {
@@ -251,14 +265,13 @@ document.getElementById('location-input').addEventListener('blur', function() {
 
 // Initialize autocomplete for location input
 function initLocationAutocomplete() {
-    const locationInput = document.getElementById('location-input');
     if (locationInput) {
-        const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+        autocomplete = new google.maps.places.Autocomplete(locationInput, {
             types: ['geocode'],
             componentRestrictions: { country: 'us' }
         });
         
-        autocomplete.addListener('place_changed', function() {
+        autocompleteListener = google.maps.event.addListener(autocomplete, 'place_changed', function() {
             const place = autocomplete.getPlace();
             if (place.geometry && place.geometry.location) {
                 const location = place.geometry.location;
@@ -274,6 +287,29 @@ function initLocationAutocomplete() {
 google.maps.event.addDomListener(window, 'load', function() {
     initMap();
     initLocationAutocomplete();
+});
+
+// Disable map and autocomplete when 'Disable Location Pin' is checked
+function setRemoteMode(isRemote) {
+    if (isRemote) {
+        mapContainer.style.display = 'none';
+        latField.value = '';
+        lngField.value = '';
+
+        if (autocomplete !== undefined) {
+          google.maps.event.removeListener(autocompleteListener);
+          google.maps.event.clearInstanceListeners(autocomplete);
+          $(".pac-container").remove();
+        }
+        
+    } else {
+        mapContainer.style.display = 'block';
+        initLocationAutocomplete();
+    }
+}
+
+remoteCheckbox.addEventListener('change', function () {
+    setRemoteMode(this.checked);
 });
 </script>
 {% endblock content %}

@@ -73,7 +73,7 @@
         <div class="card">
           <div class="card-body">
             <h5>Apply for this position</h5>
-            <p class="text-muted">Contact the employer directly or apply through their preferred method.</p>
+            <p class="text-muted">Submit your application to be considered for this role.</p>
             {% if user.is_authenticated and user.profile.is_job_seeker %}
             {% if template_data.has_applied %}
             <button class="btn btn-success w-100 mb-3" disabled>
@@ -93,14 +93,14 @@
             </a>
             {% endif %}
 
-            <div class="d-grid gap-2">
+            {% comment %} <div class="d-grid gap-2">
               <button class="btn btn-outline-secondary">
                 <i class="fas fa-heart"></i> Save Job
               </button>
               <button class="btn btn-outline-secondary">
                 <i class="fas fa-share"></i> Share Job
               </button>
-            </div>
+            </div> {% endcomment %}
           </div>
         </div>
 

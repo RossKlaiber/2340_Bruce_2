@@ -20,7 +20,7 @@ class JobForm(forms.ModelForm):
             }),
             'location': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., San Francisco, CA or Remote',
+                'placeholder': 'e.g., San Francisco, CA',
                 'id': 'location-input'
             }),
             'latitude': forms.NumberInput(attrs={

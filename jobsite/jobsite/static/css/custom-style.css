@@ -77,7 +77,6 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 700;
-  color: var(--color-text-primary);
 }
 
 .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
@@ -254,7 +253,6 @@ a:hover {
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
-  border: 1px solid transparent;
 }
 
 .btn-primary {
@@ -906,7 +904,6 @@ textarea.form-control {
 
 .card-header h5 {
   margin: 0;
-  color: var(--color-text-primary);
 }
 
 /* Kanban Board Headers - ensure white text on all colored backgrounds */
