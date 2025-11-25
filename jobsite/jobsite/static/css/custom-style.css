@@ -156,7 +156,7 @@ a:hover {
 
 .nav-link {
   position: relative;
-  color: #ffffff !important;
+  color: #ffffff;
   font-weight: 500;
   padding: 0.5rem 1rem !important;
   transition: color var(--transition-base);
@@ -175,7 +175,7 @@ a:hover {
 
 .nav-link:hover,
 .nav-link:focus {
-  color: #e9ecef !important;
+  color: #e9ecef;
 }
 
 .nav-link:hover::after {
